@@ -18,14 +18,14 @@ CodeStudio Recorder development is organized into 5 phases, each building on the
 
 | # | Milestone | Description |
 |---|---|---|
-| 1.1 | Engine Foundation | [DONE] CMake setup, FFI bridge, DLL export structure |
-| 1.2 | Capture Engine | [DONE] WGC window/monitor capture, TexturePool, FrameQueue |
-| 1.3 | Audio Engine | [DONE] WASAPI mic + loopback capture, AudioMixer implementation |
-| 1.4 | Encoding Engine | [IN PROGRESS] FFmpeg encoder structure, EncoderFactory, muxing logic |
-| 1.5 | Flutter UI Shell | [DONE] Navigation, Home, History, Settings screens |
-| 1.6 | Recording Flow | [DONE] Start/stop/pause via UI and hotkeys |
-| 1.7 | History Screen | [DONE] List recordings, persist to JSON |
-| 1.8 | Settings System | [DONE] Persistent settings (C++ backend + Flutter UI) |
+| 1.1 | Engine Foundation | CMake setup, FFI bridge, DLL export structure |
+| 1.2 | Capture Engine | WGC window/monitor capture, DXGI fallback |
+| 1.3 | Audio Engine | WASAPI mic + loopback, basic mixer |
+| 1.4 | Encoding Engine | NVENC + software fallback, MP4 output |
+| 1.5 | Flutter UI Shell | Navigation, home screen, basic settings |
+| 1.6 | Recording Flow | Start/stop/pause via UI and hotkeys |
+| 1.7 | History Screen | List recordings, basic metadata |
+| 1.8 | Settings System | SQLite settings, persist preferences |
 | 1.9 | Installer | NSIS installer, basic auto-update check |
 | 1.10 | Alpha Release | Internal testing build |
 
@@ -113,3 +113,18 @@ A Phase 1 MVP ships when:
 | 5.5 | Stream Dashboard | Live viewer count, chat, health monitoring |
 
 ---
+
+## Release Timeline (Targets)
+
+| Phase | Target |
+|---|---|
+| Phase 1 Alpha | Q2 2025 |
+| Phase 1 Stable | Q3 2025 |
+| Phase 2 | Q4 2025 |
+| Phase 3 | Q1 2026 |
+| Phase 4 | Q3 2026 |
+| Phase 5 | 2027 |
+
+---
+
+*Last updated: 2025 | Module 12 of 19*
