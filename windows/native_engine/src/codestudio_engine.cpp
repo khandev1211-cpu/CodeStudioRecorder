@@ -1,10 +1,29 @@
+#include <cctype>
+#include <cwctype>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <locale>
+#include <codecvt>
+#include <algorithm>
+#include <map>
+#include <set>
+
+// Project headers
 #include "codestudio_engine.h"
 #include "recording_engine.h"
 #include "window_utils.h"
 #include "settings_manager.h"
 #include "cs_logger.h"
-#include <codecvt>
-#include <locale>
+
+// System headers last
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
 
 class SessionManager {
 public:
@@ -42,21 +61,25 @@ public:
         return engine_.getStatus();
     }
 
+    void setProcessorEnabled(int32_t index, bool enabled) {
+        engine_.setProcessorEnabled(index, enabled);
+    }
+
 private:
     cs::RecordingEngine engine_;
 };
+
+extern "C" {
 
 CSE_API int32_t cse_start_recording(cs::RecordingConfig* config) {
     if (!config) {
         CS_LOG_ERR("cse_start_recording: config is null");
         return -1;
     }
-    CS_LOG_INFO("FFI: cse_start_recording");
     return SessionManager::instance().beginSession(*config);
 }
 
 CSE_API int32_t cse_stop_recording() {
-    CS_LOG_INFO("FFI: cse_stop_recording");
     return SessionManager::instance().endSession();
 }
 
@@ -87,7 +110,7 @@ CSE_API void cse_enumerate_windows(WindowCallback callback) {
         NativeWindowInfo nwi;
         nwi.hwnd = reinterpret_cast<int64_t>(win.hwnd);
         nwi.title = title.c_str();
-        callback(nwi);
+        callback(&nwi);
     }
 }
 
@@ -110,3 +133,9 @@ CSE_API void cse_set_setting_int(const char* key, int32_t value) {
 CSE_API int32_t cse_get_setting_int(const char* key, int32_t default_value) {
     return cs::SettingsManager::instance().getInt(key, default_value);
 }
+
+CSE_API void cse_set_processor_enabled(int32_t index, bool enabled) {
+    SessionManager::instance().setProcessorEnabled(index, enabled);
+}
+
+} // extern "C"

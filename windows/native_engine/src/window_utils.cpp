@@ -1,4 +1,18 @@
+// 1. Standard headers first
+#include <vector>
+#include <string>
+
+// 2. Project headers
 #include "window_utils.h"
+
+// 3. System headers last
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
 
 namespace cs {
 

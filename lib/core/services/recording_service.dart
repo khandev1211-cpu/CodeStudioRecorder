@@ -7,6 +7,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recordingServiceProvider = Provider((ref) => RecordingService());
 
+// Shared list for window enumeration
+final List<({int hwnd, String title})> _enumeratedWindowsList = [];
+
+// Static callback as required by dart:ffi
+void _onWindowEnumerated(Pointer<NativeWindowInfo> info) {
+  final hwnd = info.ref.hwnd;
+  final titlePtr = info.ref.title.cast<Utf8>();
+  final String title = titlePtr.toDartString();
+  _enumeratedWindowsList.add((hwnd: hwnd, title: title));
+}
+
 class RecordingService {
   final EngineBindings _bindings = EngineBindings();
 
@@ -21,6 +32,8 @@ class RecordingService {
     config.ref.targetHwnd = targetHwnd;
 
     final result = _bindings.startRecording(config);
+    // Note: We don't free config here if the engine needs it persistently,
+    // but typically the engine copies the data.
     return result;
   }
 
@@ -43,8 +56,10 @@ class RecordingService {
   }
 
   List<({int hwnd, String title})> getWindows() {
-    // Temporarily disabled native callback to debug build failure
-    return [];
+    _enumeratedWindowsList.clear();
+    final nativeCallback = Pointer.fromFunction<WindowCallbackNative>(_onWindowEnumerated);
+    _bindings.enumerateWindows(nativeCallback);
+    return List.from(_enumeratedWindowsList);
   }
 
   void setSettingString(String key, String value) {
@@ -52,8 +67,11 @@ class RecordingService {
   }
 
   String getSettingString(String key, String defaultValue) {
-    final result = _bindings.getSettingString(key.toNativeUtf8(), defaultValue.toNativeUtf8());
-    return result.toDartString();
+    final result = _bindings.getSettingString(
+      key.toNativeUtf8(),
+      defaultValue.toNativeUtf8(),
+    );
+    return result.cast<Utf8>().toDartString();
   }
 
   void setSettingInt(String key, int value) {
@@ -62,5 +80,9 @@ class RecordingService {
 
   int getSettingInt(String key, int defaultValue) {
     return _bindings.getSettingInt(key.toNativeUtf8(), defaultValue);
+  }
+
+  void setProcessorEnabled(int index, bool enabled) {
+    _bindings.setProcessorEnabled(index, enabled);
   }
 }

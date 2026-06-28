@@ -31,6 +31,9 @@ typedef SetSettingIntDart = void Function(Pointer<Utf8>, int);
 typedef GetSettingIntNative = Int32 Function(Pointer<Utf8>, Int32);
 typedef GetSettingIntDart = int Function(Pointer<Utf8>, int);
 
+typedef SetProcessorEnabledNative = Void Function(Int32, Bool);
+typedef SetProcessorEnabledDart = void Function(int, bool);
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -46,6 +49,7 @@ class EngineBindings {
   late final GetSettingStringDart getSettingString;
   late final SetSettingIntDart setSettingInt;
   late final GetSettingIntDart getSettingInt;
+  late final SetProcessorEnabledDart setProcessorEnabled;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -92,6 +96,9 @@ class EngineBindings {
         .asFunction();
     getSettingInt = _lib
         .lookup<NativeFunction<GetSettingIntNative>>('cse_get_setting_int')
+        .asFunction();
+    setProcessorEnabled = _lib
+        .lookup<NativeFunction<SetProcessorEnabledNative>>('cse_set_processor_enabled')
         .asFunction();
   }
 }

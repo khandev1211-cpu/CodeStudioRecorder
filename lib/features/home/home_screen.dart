@@ -109,22 +109,21 @@ class HomeScreen extends ConsumerWidget {
                       },
                       icon: const Icon(Icons.fiber_manual_record),
                       label: const Text('START RECORDING'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    )
-                  else
-                    ElevatedButton.icon(
-                      onPressed: () => recordingNotifier.stop(),
-                      icon: const Icon(Icons.stop),
-                      label: const Text('STOP RECORDING'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                     ),
+                  )
+                else
+                  ElevatedButton.icon(
+                    onPressed: () => recordingNotifier.stop(),
+                    icon: const Icon(Icons.stop),
+                    label: const Text('STOP RECORDING'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    ),
+                  ),
                 ],
               ),
               if (recordingState.status == RecordingStatus.completed)

@@ -2,6 +2,10 @@
 #include "cs_types.h"
 #include <functional>
 
+// Forward declarations
+struct ID3D11Device;
+struct ID3D11DeviceContext;
+
 namespace cs {
 
 struct VideoFrame {
@@ -21,6 +25,9 @@ public:
     virtual void stop() = 0;
     virtual void pause() = 0;
     virtual void resume() = 0;
+
+    virtual ID3D11Device* getDevice() = 0;
+    virtual ID3D11DeviceContext* getContext() = 0;
 };
 
 } // namespace cs

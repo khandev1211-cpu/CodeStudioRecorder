@@ -4,10 +4,12 @@
 #include "i_audio_engine.h"
 #include "i_encoder.h"
 #include "audio_mixer.h"
+#include "i_frame_processor.h"
 #include <memory>
 #include <atomic>
 #include <mutex>
 #include <chrono>
+#include <vector>
 
 namespace cs {
 
@@ -23,6 +25,7 @@ public:
 
     void getStats(RecordingStats* stats);
     RecordingStatus getStatus() const;
+    void setProcessorEnabled(int32_t index, bool enabled);
 
 private:
     std::unique_ptr<ICapturer> capturer_;
@@ -30,6 +33,7 @@ private:
     std::unique_ptr<IAudioEngine> system_audio_engine_;
     std::unique_ptr<IEncoder> encoder_;
     std::unique_ptr<AudioMixer> mixer_;
+    std::vector<std::unique_ptr<IFrameProcessor>> processors_;
 
     std::atomic<RecordingStatus> status_{RecordingStatus::Idle};
     mutable std::mutex stats_mutex_;

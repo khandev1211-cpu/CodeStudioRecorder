@@ -13,6 +13,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _fpsController;
   late String _outputPath;
+  late bool _cursorHighlight;
 
   @override
   void initState() {
@@ -22,6 +23,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       text: service.getSettingInt("fps", 60).toString(),
     );
     _outputPath = service.getSettingString("output_path", "recordings");
+    _cursorHighlight = service.getSettingInt("cursor_highlight", 1) == 1;
+    
+    // Sync initial state to engine AFTER the build is definitely done
+    Future.microtask(() {
+       service.setProcessorEnabled(0, _cursorHighlight);
+    });
   }
 
   @override
@@ -64,12 +71,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: Text(_outputPath),
             trailing: const Icon(Icons.folder_open),
             onTap: () {
-              // In a real app, use file_picker
-              // For now, just a mock update
               service.setSettingString("output_path", "C:/Users/Public/Videos");
               setState(() {
                 _outputPath = "C:/Users/Public/Videos";
               });
+            },
+          ),
+          const Divider(),
+          const Text("Effects", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          SwitchListTile(
+            title: const Text("Cursor Highlight"),
+            subtitle: const Text("Draw a yellow circle around the cursor"),
+            value: _cursorHighlight,
+            onChanged: (val) {
+              setState(() {
+                _cursorHighlight = val;
+              });
+              service.setSettingInt("cursor_highlight", val ? 1 : 0);
+              service.setProcessorEnabled(0, val);
             },
           ),
         ],

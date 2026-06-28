@@ -19,6 +19,13 @@ public:
     void pause() override;
     void resume() override;
 
+    ID3D11Device* getDevice() override { return d3d_device_.Get(); }
+    ID3D11DeviceContext* getContext() override {
+        Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
+        d3d_device_->GetImmediateContext(&context);
+        return context.Get();
+    }
+
 private:
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem item_{ nullptr };
     winrt::Windows::Graphics::Capture::GraphicsCaptureSession session_{ nullptr };

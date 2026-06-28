@@ -12,6 +12,15 @@
 #include <windows.graphics.directx.direct3d11.interop.h>
 #include <dxgi.h>
 
+// Manually define the interop interface if it's not found in the headers
+#ifndef __IDirect3DDXGIInterfaceAccess_INTERFACE_DEFINED__
+struct __declspec(uuid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1"))
+IDirect3DDXGIInterfaceAccess : ::IUnknown
+{
+    virtual HRESULT __stdcall GetInterface(GUID const& id, void** object) = 0;
+};
+#endif
+
 namespace cs {
 
 WGCCapturer::WGCCapturer() {
@@ -83,21 +92,27 @@ void WGCCapturer::onFrameArrived(
 
     auto surface = frame.Surface();
 
-    // Use the standard interop to get the DXGI interface
-    auto access = surface.as<Windows::Graphics::DirectX::Direct3D11::IDirect3DDXGIInterfaceAccess>();
+    // Get the raw IUnknown from the WinRT surface
+    auto unk = surface.as<::IUnknown>();
 
-    winrt::com_ptr<ID3D11Texture2D> texture;
-    HRESULT hr = access->GetInterface(__uuidof(ID3D11Texture2D), texture.put_void());
+    // Query for the interop interface to get the underlying DXGI texture
+    winrt::com_ptr<IDirect3DDXGIInterfaceAccess> access;
+    HRESULT hr = unk->QueryInterface(__uuidof(IDirect3DDXGIInterfaceAccess), access.put_void());
 
     if (SUCCEEDED(hr)) {
-        VideoFrame vf;
-        vf.width = frame.ContentSize().Width;
-        vf.height = frame.ContentSize().Height;
-        vf.timestamp_qpc = frame.SystemRelativeTime().count();
-        vf.data = texture.get();
+        Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+        hr = access->GetInterface(__uuidof(ID3D11Texture2D), (void**)&texture);
 
-        if (callback_) {
-            callback_(vf);
+        if (SUCCEEDED(hr)) {
+            VideoFrame vf;
+            vf.width = frame.ContentSize().Width;
+            vf.height = frame.ContentSize().Height;
+            vf.timestamp_qpc = frame.SystemRelativeTime().count();
+            vf.data = texture.Get();
+
+            if (callback_) {
+                callback_(vf);
+            }
         }
     }
 }

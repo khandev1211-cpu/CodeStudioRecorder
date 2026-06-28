@@ -1,7 +1,9 @@
 #pragma once
-#include <windows.h>
 #include <vector>
 #include <string>
+
+// Forward declare HWND to avoid windows.h in header
+typedef struct HWND__* HWND;
 
 namespace cs {
 

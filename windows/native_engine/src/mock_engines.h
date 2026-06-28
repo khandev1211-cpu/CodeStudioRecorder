@@ -28,6 +28,10 @@ public:
     }
     void pause() override {}
     void resume() override {}
+
+    ID3D11Device* getDevice() override { return nullptr; }
+    ID3D11DeviceContext* getContext() override { return nullptr; }
+
 private:
     std::atomic<bool> running_{false};
     std::thread thread_;

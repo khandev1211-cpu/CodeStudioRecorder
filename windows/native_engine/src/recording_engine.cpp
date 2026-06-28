@@ -1,22 +1,29 @@
+#include <chrono>
+#include <vector>
+#include <memory>
+#include <mutex>
+
 #include "recording_engine.h"
 #include "mock_engines.h"
+#include "wasapi_audio_engine.h"
+#include "wgc_capturer.h"
 #include "encoder_factory.h"
+#include "cursor_highlight_processor.h"
 #include "cs_logger.h"
-#include <chrono>
 
 namespace cs {
 
 RecordingEngine::RecordingEngine() {
-    CS_LOG_INFO("Initializing Recording Engine (STABLE MOCK MODE)");
+    CS_LOG_INFO("Initializing Recording Engine");
 
-    // We use Mock implementations here to guarantee a successful build
-    // while the Windows SDK environment is stabilized.
-    capturer_ = std::make_unique<MockCapturer>();
-    mic_engine_ = std::make_unique<MockAudioEngine>();
-    system_audio_engine_ = std::make_unique<MockAudioEngine>();
+    capturer_ = std::make_unique<WGCCapturer>();
+    mic_engine_ = std::make_unique<WASAPIAudioEngine>(WASAPIAudioEngine::DeviceMode::Capture);
+    system_audio_engine_ = std::make_unique<WASAPIAudioEngine>(WASAPIAudioEngine::DeviceMode::Loopback);
 
     encoder_ = EncoderFactory::createEncoder();
     mixer_ = std::make_unique<AudioMixer>();
+
+    processors_.push_back(std::make_unique<CursorHighlightProcessor>());
 }
 
 RecordingEngine::~RecordingEngine() {
@@ -29,13 +36,26 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
         return -1;
     }
 
-    CS_LOG_INFO("Starting recording session (MOCK)...");
+    CS_LOG_INFO("Starting recording session...");
     status_ = RecordingStatus::Initializing;
 
-    if (!encoder_->initialize(config) || !capturer_->initialize(config)) {
-        CS_LOG_ERR("Failed to initialize engines");
+    if (!encoder_->initialize(config)) {
+        CS_LOG_ERR("Failed to initialize encoder");
         status_ = RecordingStatus::Error;
         return -2;
+    }
+
+    if (!capturer_->initialize(config)) {
+        CS_LOG_ERR("Failed to initialize capturer");
+        status_ = RecordingStatus::Error;
+        return -3;
+    }
+
+    // Optional audio initialization
+    if (config.capture_audio) {
+        if (!mic_engine_->initialize(config) || !system_audio_engine_->initialize(config)) {
+            CS_LOG_WARN("Failed to initialize audio, continuing without it");
+        }
     }
 
     {
@@ -102,9 +122,23 @@ RecordingStatus RecordingEngine::getStatus() const {
     return status_;
 }
 
+void RecordingEngine::setProcessorEnabled(int32_t index, bool enabled) {
+    if (index >= 0 && index < processors_.size()) {
+        processors_[index]->setEnabled(enabled);
+    }
+}
+
 void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
     if (status_ == RecordingStatus::Recording) {
-        encoder_->encodeVideoFrame(frame);
+        // Apply processors
+        VideoFrame processedFrame = frame;
+        for (auto& processor : processors_) {
+            if (processor->isEnabled()) {
+                processor->process(processedFrame, capturer_->getDevice(), capturer_->getContext());
+            }
+        }
+
+        encoder_->encodeVideoFrame(processedFrame);
 
         std::lock_guard<std::mutex> lock(stats_mutex_);
         auto now = std::chrono::steady_clock::now();

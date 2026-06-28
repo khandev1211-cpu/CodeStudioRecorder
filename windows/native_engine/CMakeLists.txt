@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(codestudio_engine)
 
+# Use C++20 for best WinRT and Coroutine support
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -17,10 +18,11 @@ else()
     message(WARNING "FFmpeg headers not found. Building with Mock Encoder fallback.")
 endif()
 
-# Only build stable files to guarantee build success across different environments.
 add_library(codestudio_engine SHARED
     src/codestudio_engine.cpp
     src/recording_engine.cpp
+    src/wgc_capturer.cpp
+    src/wasapi_audio_engine.cpp
     src/texture_pool.cpp
     src/ffmpeg_encoder.cpp
     src/window_utils.cpp
@@ -28,6 +30,7 @@ add_library(codestudio_engine SHARED
     src/encoder_factory.cpp
     src/audio_mixer.cpp
     src/cs_logger.cpp
+    src/cursor_highlight_processor.cpp
 )
 
 if(WIN32)
@@ -41,13 +44,15 @@ if(WIN32)
         dwmapi
         d3d11
         dxgi
+        d2d1
         ${FFMPEG_LIBS}
     )
 
     target_compile_definitions(codestudio_engine PRIVATE
-        _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
-        _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
         _CRT_SECURE_NO_WARNINGS
+        _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+        _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+        _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
         WIN32_LEAN_AND_MEAN
         NOMINMAX
     )

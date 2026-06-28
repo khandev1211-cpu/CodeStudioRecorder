@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:codestudio_recorder/core/services/history_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -36,15 +38,44 @@ class HistoryScreen extends ConsumerWidget {
                     subtitle: Text(
                       '${DateFormat.yMMMd().add_jm().format(recording.createdAt)} • ${_formatDuration(recording.duration)}',
                     ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // Show details or play
-                    },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.folder_open),
+                          tooltip: 'Open Folder',
+                          onPressed: () => _openFolder(recording.filePath),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.play_arrow),
+                          tooltip: 'Play',
+                          onPressed: () => _playFile(recording.filePath),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
     );
+  }
+
+  Future<void> _openFolder(String filePath) async {
+    final file = File(filePath);
+    final folder = file.parent;
+    // For Windows, opening a directory URL works with launchUrl
+    final uri = Uri.directory(folder.path);
+    if (!await launchUrl(uri)) {
+      // Fallback or error logging
+    }
+  }
+
+  Future<void> _playFile(String filePath) async {
+    final file = File(filePath);
+    final uri = Uri.file(file.path);
+    if (!await launchUrl(uri)) {
+      // Fallback or error logging
+    }
   }
 
   String _formatDuration(Duration duration) {
