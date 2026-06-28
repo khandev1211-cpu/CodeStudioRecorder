@@ -11,7 +11,12 @@ namespace cs {
 
 class WASAPIAudioEngine : public IAudioEngine {
 public:
-    WASAPIAudioEngine();
+    enum class DeviceMode {
+        Loopback,
+        Capture
+    };
+
+    WASAPIAudioEngine(DeviceMode mode);
     ~WASAPIAudioEngine();
 
     bool initialize(const RecordingConfig& config) override;
@@ -21,6 +26,7 @@ public:
 private:
     void captureLoop();
 
+    DeviceMode mode_;
     Microsoft::WRL::ComPtr<IAudioClient> audio_client_;
     Microsoft::WRL::ComPtr<IAudioCaptureClient> capture_client_;
     HANDLE sample_ready_event_ = NULL;

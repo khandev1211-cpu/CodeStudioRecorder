@@ -8,8 +8,10 @@ namespace cs {
 
 RecordingEngine::RecordingEngine() {
     capturer_ = std::make_unique<WGCCapturer>();
-    audio_engine_ = std::make_unique<WASAPIAudioEngine>();
+    mic_engine_ = std::make_unique<WASAPIAudioEngine>(WASAPIAudioEngine::DeviceMode::Capture);
+    system_audio_engine_ = std::make_unique<WASAPIAudioEngine>(WASAPIAudioEngine::DeviceMode::Loopback);
     encoder_ = EncoderFactory::createEncoder();
+    mixer_ = std::make_unique<AudioMixer>();
 }
 
 RecordingEngine::~RecordingEngine() {
@@ -25,7 +27,8 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
 
     if (!encoder_->initialize(config) ||
         !capturer_->initialize(config) ||
-        !audio_engine_->initialize(config)) {
+        !mic_engine_->initialize(config) ||
+        !system_audio_engine_->initialize(config)) {
         status_ = RecordingStatus::Error;
         return -2;
     }
@@ -33,7 +36,8 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
     status_ = RecordingStatus::Recording;
 
     capturer_->start([this](const VideoFrame& frame) { onVideoFrame(frame); });
-    audio_engine_->start([this](const AudioBuffer& buffer) { onAudioBuffer(buffer); });
+    mic_engine_->start([this](const AudioBuffer& buffer) { onMicBuffer(buffer); });
+    system_audio_engine_->start([this](const AudioBuffer& buffer) { onSystemBuffer(buffer); });
 
     return 0;
 }
@@ -46,7 +50,8 @@ int32_t RecordingEngine::stop() {
     status_ = RecordingStatus::Flushing;
 
     capturer_->stop();
-    audio_engine_->stop();
+    mic_engine_->stop();
+    system_audio_engine_->stop();
     encoder_->finalize();
 
     status_ = RecordingStatus::Completed;
@@ -87,9 +92,27 @@ void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
     }
 }
 
-void RecordingEngine::onAudioBuffer(const AudioBuffer& buffer) {
+void RecordingEngine::onMicBuffer(const AudioBuffer& buffer) {
     if (status_ == RecordingStatus::Recording) {
-        encoder_->encodeAudioBuffer(buffer);
+        mixer_->pushMicBuffer(buffer);
+
+        std::vector<float> mixed;
+        uint32_t channels, sample_rate;
+        if (mixer_->getNextMixedBuffer(mixed, channels, sample_rate)) {
+            AudioBuffer mixed_buffer;
+            mixed_buffer.samples = mixed.data();
+            mixed_buffer.frame_count = static_cast<uint32_t>(mixed.size() / channels);
+            mixed_buffer.channels = channels;
+            mixed_buffer.sample_rate = sample_rate;
+            mixed_buffer.timestamp_qpc = buffer.timestamp_qpc;
+            encoder_->encodeAudioBuffer(mixed_buffer);
+        }
+    }
+}
+
+void RecordingEngine::onSystemBuffer(const AudioBuffer& buffer) {
+    if (status_ == RecordingStatus::Recording) {
+        mixer_->pushSystemBuffer(buffer);
     }
 }
 

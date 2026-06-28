@@ -3,6 +3,7 @@
 #include "i_capturer.h"
 #include "i_audio_engine.h"
 #include "i_encoder.h"
+#include "audio_mixer.h"
 #include <memory>
 #include <atomic>
 #include <mutex>
@@ -24,15 +25,18 @@ public:
 
 private:
     std::unique_ptr<ICapturer> capturer_;
-    std::unique_ptr<IAudioEngine> audio_engine_;
+    std::unique_ptr<IAudioEngine> mic_engine_;
+    std::unique_ptr<IAudioEngine> system_audio_engine_;
     std::unique_ptr<IEncoder> encoder_;
+    std::unique_ptr<AudioMixer> mixer_;
 
     std::atomic<RecordingStatus> status_{RecordingStatus::Idle};
     mutable std::mutex stats_mutex_;
     RecordingStats stats_{};
 
     void onVideoFrame(const VideoFrame& frame);
-    void onAudioBuffer(const AudioBuffer& buffer);
+    void onMicBuffer(const AudioBuffer& buffer);
+    void onSystemBuffer(const AudioBuffer& buffer);
 };
 
 } // namespace cs

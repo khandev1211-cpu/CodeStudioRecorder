@@ -20,8 +20,8 @@ CodeStudio Recorder development is organized into 5 phases, each building on the
 |---|---|---|
 | 1.1 | Engine Foundation | [DONE] CMake setup, FFI bridge, DLL export structure |
 | 1.2 | Capture Engine | [DONE] WGC window/monitor capture, TexturePool, FrameQueue |
-| 1.3 | Audio Engine | [DONE] WASAPI system audio loopback capture |
-| 1.4 | Encoding Engine | [IN PROGRESS] FFmpeg encoder structure, EncoderFactory |
+| 1.3 | Audio Engine | [DONE] WASAPI mic + loopback capture, AudioMixer implementation |
+| 1.4 | Encoding Engine | [IN PROGRESS] FFmpeg encoder structure, EncoderFactory, muxing logic |
 | 1.5 | Flutter UI Shell | [DONE] Navigation, Home, History, Settings screens |
 | 1.6 | Recording Flow | [DONE] Start/stop/pause via UI and hotkeys |
 | 1.7 | History Screen | [DONE] List recordings, persist to JSON |

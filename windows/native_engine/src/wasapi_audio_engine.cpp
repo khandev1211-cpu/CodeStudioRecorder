@@ -6,11 +6,12 @@
 
 namespace cs {
 
-WASAPIAudioEngine::WASAPIAudioEngine() {
+WASAPIAudioEngine::WASAPIAudioEngine(DeviceMode mode) : mode_(mode) {
     CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 }
 
 WASAPIAudioEngine::~WASAPIAudioEngine() {
+// ...
     stop();
     if (wave_format_) CoTaskMemFree(wave_format_);
     CoUninitialize();
@@ -22,7 +23,11 @@ bool WASAPIAudioEngine::initialize(const RecordingConfig& config) {
     if (FAILED(hr)) return false;
 
     Microsoft::WRL::ComPtr<IMMDevice> device;
-    hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device); // eRender + Loopback = System Audio
+    if (mode_ == DeviceMode::Loopback) {
+        hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
+    } else {
+        hr = enumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &device);
+    }
     if (FAILED(hr)) return false;
 
     hr = device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void**)&audio_client_);
@@ -31,10 +36,15 @@ bool WASAPIAudioEngine::initialize(const RecordingConfig& config) {
     hr = audio_client_->GetMixFormat(&wave_format_);
     if (FAILED(hr)) return false;
 
-    // Initialize for loopback
+    // Initialize based on mode
+    DWORD flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
+    if (mode_ == DeviceMode::Loopback) {
+        flags |= AUDCLNT_STREAMFLAGS_LOOPBACK;
+    }
+
     hr = audio_client_->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
-        AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+        flags,
         0, 0, wave_format_, nullptr);
     if (FAILED(hr)) return false;
 
