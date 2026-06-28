@@ -48,6 +48,11 @@ CodeStudio follows a strict **Layered Architecture**:
 - **Visual Studio 2022** (with "Desktop development with C++" workload)
 - **CMake** (3.10+)
 - **Windows 10 1903+** (Required for WGC)
+- **FFmpeg 6.0+ Development Libraries**:
+    - Download the "shared" or "dev" build from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/).
+    - Extract to `third_party/ffmpeg/`.
+    - Ensure headers are in `third_party/ffmpeg/include` and `.lib` files are in `third_party/ffmpeg/lib/x64`.
+    - Place the `.dll` files in your system path or copy them to the build output folder.
 
 ### Installation & Build
 

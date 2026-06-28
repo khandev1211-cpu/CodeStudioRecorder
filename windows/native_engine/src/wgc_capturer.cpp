@@ -80,11 +80,19 @@ void WGCCapturer::onFrameArrived(
     auto frame = sender.TryGetNextFrame();
     if (!frame) return;
 
+    auto surface = frame.Surface();
+    auto access = surface.as<Windows::Graphics::DirectX::Direct3D11::IDirect3DBindings::IDirect3DDXGIIterop>();
+
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+    HRESULT hr = access->GetDXGIInterface(__uuidof(ID3D11Texture2D), texture.GetAddressOf());
+
+    if (FAILED(hr)) return;
+
     VideoFrame vf;
     vf.width = frame.ContentSize().Width;
     vf.height = frame.ContentSize().Height;
-    vf.timestamp_qpc = 0;
-    vf.data = nullptr;
+    vf.timestamp_qpc = frame.SystemRelativeTime().count();
+    vf.data = texture.Get(); // Borrowed reference for the duration of the callback
 
     if (callback_) {
         callback_(vf);
