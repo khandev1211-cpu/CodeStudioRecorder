@@ -2,6 +2,7 @@
 #include "recording_engine.h"
 #include "window_utils.h"
 #include "settings_manager.h"
+#include "cs_logger.h"
 #include <codecvt>
 #include <locale>
 
@@ -10,6 +11,11 @@ public:
     static SessionManager& instance() {
         static SessionManager inst;
         return inst;
+    }
+
+    SessionManager() {
+        cs::Logger::instance().setLogFile("codestudio.log");
+        CS_LOG_INFO("Session Manager Initialized");
     }
 
     int32_t beginSession(const cs::RecordingConfig& config) {
@@ -41,11 +47,16 @@ private:
 };
 
 CSE_API int32_t cse_start_recording(cs::RecordingConfig* config) {
-    if (!config) return -1;
+    if (!config) {
+        CS_LOG_ERR("cse_start_recording: config is null");
+        return -1;
+    }
+    CS_LOG_INFO("FFI: cse_start_recording");
     return SessionManager::instance().beginSession(*config);
 }
 
 CSE_API int32_t cse_stop_recording() {
+    CS_LOG_INFO("FFI: cse_stop_recording");
     return SessionManager::instance().endSession();
 }
 

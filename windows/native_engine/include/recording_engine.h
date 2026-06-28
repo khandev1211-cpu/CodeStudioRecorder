@@ -7,6 +7,7 @@
 #include <memory>
 #include <atomic>
 #include <mutex>
+#include <chrono>
 
 namespace cs {
 
@@ -33,6 +34,7 @@ private:
     std::atomic<RecordingStatus> status_{RecordingStatus::Idle};
     mutable std::mutex stats_mutex_;
     RecordingStats stats_{};
+    std::chrono::steady_clock::time_point start_time_;
 
     void onVideoFrame(const VideoFrame& frame);
     void onMicBuffer(const AudioBuffer& buffer);

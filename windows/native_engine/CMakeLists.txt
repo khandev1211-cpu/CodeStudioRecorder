@@ -17,6 +17,7 @@ add_library(codestudio_engine SHARED
     src/settings_manager.cpp
     src/encoder_factory.cpp
     src/audio_mixer.cpp
+    src/cs_logger.cpp
 )
 
 if(WIN32)
