@@ -2,14 +2,18 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 import 'package:codestudio_recorder/core/ffi/engine_bindings.dart';
 import 'package:codestudio_recorder/core/ffi/types/native_types.dart';
+import 'package:codestudio_recorder/core/models/recording_stats.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recordingServiceProvider = Provider((ref) => RecordingService());
 
 final List<({int hwnd, String title})> _enumeratedWindows = [];
 
-void _windowCallback(NativeWindowInfo info) {
-  _enumeratedWindows.add((hwnd: info.hwnd, title: info.title.toDartString()));
+void _windowCallback(Pointer<NativeWindowInfo> info) {
+  _enumeratedWindows.add((
+    hwnd: info.ref.hwnd,
+    title: info.ref.title.toDartString()
+  ));
 }
 
 class RecordingService {
@@ -35,10 +39,16 @@ class RecordingService {
 
   RecordingStatus get status => RecordingStatus.fromInt(_bindings.getStatus());
 
-  NativeRecordingStats getStats() {
-    final stats = calloc<NativeRecordingStats>();
-    _bindings.getStats(stats);
-    return stats.ref;
+  RecordingStats getStats() {
+    final statsPtr = calloc<NativeRecordingStats>();
+    _bindings.getStats(statsPtr);
+    final stats = RecordingStats(
+      elapsedMs: statsPtr.ref.elapsedMs,
+      droppedFrames: statsPtr.ref.droppedFrames,
+      encoderLoad: statsPtr.ref.encoderLoad,
+    );
+    calloc.free(statsPtr);
+    return stats;
   }
 
   List<({int hwnd, String title})> getWindows() {

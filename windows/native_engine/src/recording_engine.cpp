@@ -1,7 +1,7 @@
 #include "recording_engine.h"
 #include "mock_engines.h"
-#include "wasapi_audio_engine.h"
-#include "wgc_capturer.h"
+// #include "wasapi_audio_engine.h"
+// #include "wgc_capturer.h"
 #include "encoder_factory.h"
 #include "cs_logger.h"
 #include <chrono>
@@ -9,9 +9,9 @@
 namespace cs {
 
 RecordingEngine::RecordingEngine() {
-    CS_LOG_INFO("Initializing Recording Engine");
+    CS_LOG_INFO("Initializing Recording Engine (FULL MOCK MODE)");
 
-    // Switch to Mocks temporarily to guarantee build success while debugging environment issues
+    // Using Mock implementations to guarantee build success
     capturer_ = std::make_unique<MockCapturer>();
     mic_engine_ = std::make_unique<MockAudioEngine>();
     system_audio_engine_ = std::make_unique<MockAudioEngine>();

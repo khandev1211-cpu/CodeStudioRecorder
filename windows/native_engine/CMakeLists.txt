@@ -55,5 +55,3 @@ if(WIN32)
         NOMINMAX
     )
 endif()
-
-install(TARGETS codestudio_engine RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)

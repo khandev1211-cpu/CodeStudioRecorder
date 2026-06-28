@@ -15,7 +15,7 @@ typedef GetStatsDart = void Function(Pointer<NativeRecordingStats>);
 typedef GetStatusNative = Int32 Function();
 typedef GetStatusDart = int Function();
 
-typedef WindowCallbackNative = Void Function(NativeWindowInfo);
+typedef WindowCallbackNative = Void Function(Pointer<NativeWindowInfo>);
 typedef EnumerateWindowsNative = Void Function(Pointer<NativeFunction<WindowCallbackNative>>);
 typedef EnumerateWindowsDart = void Function(Pointer<NativeFunction<WindowCallbackNative>>);
 
