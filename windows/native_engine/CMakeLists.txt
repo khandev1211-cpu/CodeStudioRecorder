@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(codestudio_engine)
 
-set(CMAKE_CXX_STANDARD 17)
+# Use C++20 for better WinRT and Coroutine support
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
@@ -14,7 +15,7 @@ if(EXISTS "${FFMPEG_DIR}/include/libavcodec/avcodec.h")
     link_directories(${FFMPEG_DIR}/lib/x64)
     set(FFMPEG_LIBS avcodec avformat avutil swscale swresample)
 else()
-    message(WARNING "FFmpeg headers not found at ${FFMPEG_DIR}/include. Building with Mock Encoder fallback.")
+    message(WARNING "FFmpeg headers not found. Building with Mock Encoder fallback.")
 endif()
 
 add_library(codestudio_engine SHARED
@@ -36,7 +37,7 @@ if(WIN32)
         PREFIX ""
         SUFFIX ".dll"
     )
-    # Link to Windows APIs
+
     target_link_libraries(codestudio_engine PRIVATE
         windowsapp
         dwmapi
@@ -45,12 +46,14 @@ if(WIN32)
         ${FFMPEG_LIBS}
     )
 
+    # Suppress deprecation and experimental feature warnings
     target_compile_definitions(codestudio_engine PRIVATE
         _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
         _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
         _CRT_SECURE_NO_WARNINGS
+        WIN32_LEAN_AND_MEAN
+        NOMINMAX
     )
 endif()
 
-# Ensure the DLL is copied to the same directory as the executable
 install(TARGETS codestudio_engine RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
