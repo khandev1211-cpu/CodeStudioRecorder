@@ -1,12 +1,15 @@
 #include "recording_engine.h"
 #include "mock_engines.h"
+#include "wasapi_audio_engine.h"
+#include "wgc_capturer.h"
+#include "ffmpeg_encoder.h"
 
 namespace cs {
 
 RecordingEngine::RecordingEngine() {
-    capturer_ = std::make_unique<MockCapturer>();
-    audio_engine_ = std::make_unique<MockAudioEngine>();
-    encoder_ = std::make_unique<MockEncoder>();
+    capturer_ = std::make_unique<WGCCapturer>();
+    audio_engine_ = std::make_unique<WASAPIAudioEngine>();
+    encoder_ = std::make_unique<FFmpegEncoder>();
 }
 
 RecordingEngine::~RecordingEngine() {

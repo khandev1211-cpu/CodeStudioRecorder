@@ -1,5 +1,5 @@
 #include "codestudio_engine.h"
-#include <iostream>
+#include "recording_engine.h"
 
 class SessionManager {
 public:
@@ -9,39 +9,31 @@ public:
     }
 
     int32_t beginSession(const cs::RecordingConfig& config) {
-        std::cout << "Starting recording to: " << config.output_path << std::endl;
-        status_ = cs::RecordingStatus::Recording;
-        return 0; // Success
+        return engine_.start(config);
     }
 
     int32_t endSession() {
-        std::cout << "Stopping recording" << std::endl;
-        status_ = cs::RecordingStatus::Completed;
-        return 0;
+        return engine_.stop();
     }
 
     int32_t pauseSession() {
-        status_ = cs::RecordingStatus::Paused;
-        return 0;
+        return engine_.pause();
     }
 
     int32_t resumeSession() {
-        status_ = cs::RecordingStatus::Recording;
-        return 0;
+        return engine_.resume();
     }
 
     void getStats(cs::RecordingStats* stats) {
-        stats->elapsed_ms = 1000; // Mock data
-        stats->dropped_frames = 0;
-        stats->encoder_load = 0.1f;
+        engine_.getStats(stats);
     }
 
     cs::RecordingStatus getStatus() const {
-        return status_;
+        return engine_.getStatus();
     }
 
 private:
-    cs::RecordingStatus status_ = cs::RecordingStatus::Idle;
+    cs::RecordingEngine engine_;
 };
 
 CSE_API int32_t cse_start_recording(cs::RecordingConfig* config) {
