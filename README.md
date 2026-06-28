@@ -49,10 +49,11 @@ CodeStudio follows a strict **Layered Architecture**:
 - **CMake** (3.10+)
 - **Windows 10 1903+** (Required for WGC)
 - **FFmpeg 6.0+ Development Libraries**:
-    - Download the "shared" or "dev" build from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/).
-    - Extract to `third_party/ffmpeg/`.
-    - Ensure headers are in `third_party/ffmpeg/include` and `.lib` files are in `third_party/ffmpeg/lib/x64`.
-    - Place the `.dll` files in your system path or copy them to the build output folder.
+    - Download the **"dev"** and **"shared"** builds from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/).
+    - Create a folder `third_party/ffmpeg` in the project root.
+    - Copy the `include` folder from the **dev** build into `third_party/ffmpeg/`.
+    - Copy the `.lib` files from the `lib` folder of the **dev** build into `third_party/ffmpeg/lib/x64`.
+    - Copy the `.dll` files from the `bin` folder of the **shared** build into `windows/runner/` (so they are found by the executable).
 
 ### Installation & Build
 
