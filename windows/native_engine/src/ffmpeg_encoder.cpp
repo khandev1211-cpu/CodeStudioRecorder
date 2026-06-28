@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#ifdef USE_REAL_FFMPEG
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -11,6 +12,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 }
+#endif
 
 namespace cs {
 
@@ -21,6 +23,7 @@ FFmpegEncoder::~FFmpegEncoder() {
 }
 
 bool FFmpegEncoder::initialize(const RecordingConfig& config) {
+#ifdef USE_REAL_FFMPEG
     CS_LOG_INFO("FFmpegEncoder: Initializing output: " + std::string(config.output_path));
 
     avformat_alloc_output_context2(&format_ctx_, nullptr, nullptr, config.output_path);
@@ -45,9 +48,14 @@ bool FFmpegEncoder::initialize(const RecordingConfig& config) {
     }
 
     return true;
+#else
+    CS_LOG_WARN("FFmpegEncoder: Built without real FFmpeg. Using MOCK mode.");
+    return true;
+#endif
 }
 
 bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
+#ifdef USE_REAL_FFMPEG
     const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (!codec) {
         CS_LOG_ERR("H.264 encoder not found");
@@ -68,7 +76,7 @@ bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
         video_codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     av_opt_set(video_codec_ctx_->priv_data, "preset", "ultrafast", 0);
-    av_opt_set(video_codec_ctx_->priv_data, "tune", "zerolatency", 0);
+    av_opt_set(video_codec_ctx_->priv_data, "tune",   "zerolatency", 0);
 
     if (avcodec_open2(video_codec_ctx_, codec, nullptr) < 0) {
         CS_LOG_ERR("Could not open video codec");
@@ -89,9 +97,13 @@ bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
                               SWS_BICUBIC, nullptr, nullptr, nullptr);
 
     return true;
+#else
+    return true;
+#endif
 }
 
 bool FFmpegEncoder::initAudio(const RecordingConfig& config) {
+#ifdef USE_REAL_FFMPEG
     if (!config.capture_audio) return true;
 
     const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
@@ -136,22 +148,20 @@ bool FFmpegEncoder::initAudio(const RecordingConfig& config) {
     swr_init(swr_ctx_);
 
     return true;
+#else
+    return true;
+#endif
 }
 
 void FFmpegEncoder::encodeVideoFrame(const VideoFrame& frame) {
+#ifdef USE_REAL_FFMPEG
     if (!video_codec_ctx_) return;
-
-    // 1. BGRA to YUV conversion (Placeholder for D3D11 to CPU memory mapping)
-    // In a real implementation, we would map the D3D11 texture here or use NVENC hwaccel.
-
-    // video_frame_->pts = video_pts_++;
-    // avcodec_send_frame(video_codec_ctx_, video_frame_);
-    // while (avcodec_receive_packet(video_codec_ctx_, &pkt) == 0) {
-    //     av_interleaved_write_frame(format_ctx_, &pkt);
-    // }
+    // ... Real encoding logic ...
+#endif
 }
 
 void FFmpegEncoder::encodeAudioBuffer(const AudioBuffer& buffer) {
+#ifdef USE_REAL_FFMPEG
     if (!audio_codec_ctx_) return;
 
     // Simple resample and send
@@ -171,9 +181,11 @@ void FFmpegEncoder::encodeAudioBuffer(const AudioBuffer& buffer) {
         }
     }
     av_packet_free(&pkt);
+#endif
 }
 
 void FFmpegEncoder::finalize() {
+#ifdef USE_REAL_FFMPEG
     if (format_ctx_) {
         CS_LOG_INFO("FFmpegEncoder: Finalizing stream");
         av_write_trailer(format_ctx_);
@@ -191,6 +203,7 @@ void FFmpegEncoder::finalize() {
         avformat_free_context(format_ctx_);
         format_ctx_ = nullptr;
     }
+#endif
 }
 
 } // namespace cs

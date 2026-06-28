@@ -12,6 +12,15 @@
 #include <windows.graphics.directx.direct3d11.interop.h>
 #include <dxgi.h>
 
+// Manually define the interop interface if headers are tricky
+namespace Windows::Graphics::DirectX::Direct3D11 {
+    struct __declspec(uuid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1"))
+    IDirect3DDXGIInterfaceAccess : ::IUnknown
+    {
+        virtual HRESULT __stdcall GetInterface(GUID const& id, void** object) = 0;
+    };
+}
+
 namespace cs {
 
 WGCCapturer::WGCCapturer() {
@@ -43,7 +52,7 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
 
     if (config.target_hwnd != 0) {
         auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
-        hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), winrt::put_abi(item_));
+        hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
         if (FAILED(hr)) return false;
     }
 
@@ -82,7 +91,7 @@ void WGCCapturer::onFrameArrived(
 
     auto surface = frame.Surface();
 
-    // Get the underlying DXGI surface from the WinRT IDirect3DSurface
+    // Use the manually defined interop interface
     auto access = surface.as<Windows::Graphics::DirectX::Direct3D11::IDirect3DDXGIInterfaceAccess>();
 
     Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;

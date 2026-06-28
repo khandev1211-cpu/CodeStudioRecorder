@@ -5,9 +5,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/ffmpeg/include)
 
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/ffmpeg/lib/x64)
+set(FFMPEG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/ffmpeg")
+if(EXISTS "${FFMPEG_DIR}/include/libavcodec/avcodec.h")
+    message(STATUS "FFmpeg headers found. Building with real encoder.")
+    add_definitions(-DUSE_REAL_FFMPEG)
+    include_directories(${FFMPEG_DIR}/include)
+    link_directories(${FFMPEG_DIR}/lib/x64)
+    set(FFMPEG_LIBS avcodec avformat avutil swscale swresample)
+else()
+    message(WARNING "FFmpeg headers not found at ${FFMPEG_DIR}/include. Building with Mock Encoder fallback.")
+endif()
 
 add_library(codestudio_engine SHARED
     src/codestudio_engine.cpp
@@ -34,11 +42,7 @@ if(WIN32)
         dwmapi
         d3d11
         dxgi
-        avcodec
-        avformat
-        avutil
-        swscale
-        swresample
+        ${FFMPEG_LIBS}
     )
 
     target_compile_definitions(codestudio_engine PRIVATE
