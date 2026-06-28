@@ -9,6 +9,8 @@
 #include <dwmapi.h>
 #include <windows.graphics.capture.interop.h>
 #include <windows.graphics.capture.h>
+#include <windows.graphics.directx.direct3d11.interop.h>
+#include <dxgi.h>
 
 namespace cs {
 
@@ -21,7 +23,6 @@ WGCCapturer::~WGCCapturer() {
 }
 
 bool WGCCapturer::initialize(const RecordingConfig& config) {
-    // 1. Initialize D3D11 Device
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 };
     HRESULT hr = D3D11CreateDevice(
         nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
@@ -30,18 +31,19 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
 
     if (FAILED(hr)) return false;
 
-    // 2. Wrap D3D11 Device for WinRT
-    auto dxgiDevice = d3d_device_.As<IDXGIDevice>();
+    Microsoft::WRL::ComPtr<IDXGIDevice> dxgiDevice;
+    hr = d3d_device_.As(&dxgiDevice);
+    if (FAILED(hr)) return false;
+
     winrt::com_ptr<::IInspectable> inspectable;
     hr = CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.Get(), inspectable.put());
     if (FAILED(hr)) return false;
 
     device_ = inspectable.as<winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice>();
 
-    // 3. Create Capture Item for HWND
     if (config.target_hwnd != 0) {
         auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
-        hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<ABI::Windows::Graphics::Capture::IGraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
+        hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), winrt::put_abi(item_));
         if (FAILED(hr)) return false;
     }
 
@@ -50,7 +52,6 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
 
 void WGCCapturer::start(FrameCallback callback) {
     callback_ = callback;
-
     if (!item_) return;
 
     frame_pool_ = winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool::CreateFreeThreaded(
@@ -60,21 +61,13 @@ void WGCCapturer::start(FrameCallback callback) {
         item_.Size());
 
     session_ = frame_pool_.CreateCaptureSession(item_);
-
     frame_arrived_revoker_ = frame_pool_.FrameArrived(winrt::auto_revoke, { this, &WGCCapturer::onFrameArrived });
-
     session_.StartCapture();
 }
 
 void WGCCapturer::stop() {
-    if (session_) {
-        session_.Close();
-        session_ = nullptr;
-    }
-    if (frame_pool_) {
-        frame_pool_.Close();
-        frame_pool_ = nullptr;
-    }
+    if (session_) { session_.Close(); session_ = nullptr; }
+    if (frame_pool_) { frame_pool_.Close(); frame_pool_ = nullptr; }
 }
 
 void WGCCapturer::pause() {}
@@ -90,8 +83,8 @@ void WGCCapturer::onFrameArrived(
     VideoFrame vf;
     vf.width = frame.ContentSize().Width;
     vf.height = frame.ContentSize().Height;
-    vf.timestamp_qpc = 0; // Should get from frame.SystemRelativeTime()
-    vf.data = nullptr; // Texture access
+    vf.timestamp_qpc = 0;
+    vf.data = nullptr;
 
     if (callback_) {
         callback_(vf);

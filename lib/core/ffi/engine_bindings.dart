@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'package:ffi/ffi.dart';
 import 'package:codestudio_recorder/core/ffi/types/native_types.dart';
 
 typedef StartRecordingNative = Int32 Function(Pointer<NativeRecordingConfig>);

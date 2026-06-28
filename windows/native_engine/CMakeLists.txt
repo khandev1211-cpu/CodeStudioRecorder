@@ -32,6 +32,12 @@ if(WIN32)
         d3d11
         dxgi
     )
+
+    target_compile_definitions(codestudio_engine PRIVATE
+        _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
+        _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+        _CRT_SECURE_NO_WARNINGS
+    )
 endif()
 
 # Ensure the DLL is copied to the same directory as the executable

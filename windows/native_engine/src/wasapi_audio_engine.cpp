@@ -11,7 +11,6 @@ WASAPIAudioEngine::WASAPIAudioEngine(DeviceMode mode) : mode_(mode) {
 }
 
 WASAPIAudioEngine::~WASAPIAudioEngine() {
-// ...
     stop();
     if (wave_format_) CoTaskMemFree(wave_format_);
     CoUninitialize();

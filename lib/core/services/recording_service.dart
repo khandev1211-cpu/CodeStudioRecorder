@@ -6,6 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recordingServiceProvider = Provider((ref) => RecordingService());
 
+final List<({int hwnd, String title})> _enumeratedWindows = [];
+
+void _windowCallback(NativeWindowInfo info) {
+  _enumeratedWindows.add((hwnd: info.hwnd, title: info.title.toDartString()));
+}
+
 class RecordingService {
   final EngineBindings _bindings = EngineBindings();
 
@@ -20,12 +26,6 @@ class RecordingService {
     config.ref.targetHwnd = targetHwnd;
 
     final result = _bindings.startRecording(config);
-    
-    // In a real app, we'd manage the memory more carefully, 
-    // maybe freeing the string after the call if the engine copies it.
-    // calloc.free(config.ref.outputPath);
-    // calloc.free(config);
-    
     return result;
   }
 
@@ -38,22 +38,14 @@ class RecordingService {
   NativeRecordingStats getStats() {
     final stats = calloc<NativeRecordingStats>();
     _bindings.getStats(stats);
-    final result = stats.ref;
-    // Note: This is simplified. Normally we'd copy the values and free the pointer.
-    return result;
+    return stats.ref;
   }
 
   List<({int hwnd, String title})> getWindows() {
-    final windows = <({int hwnd, String title})>[];
-
-    void callback(NativeWindowInfo info) {
-      windows.add((hwnd: info.hwnd, title: info.title.toDartString()));
-    }
-
-    final nativeCallback = Pointer.fromFunction<WindowCallbackNative>(callback);
+    _enumeratedWindows.clear();
+    final nativeCallback = Pointer.fromFunction<WindowCallbackNative>(_windowCallback);
     _bindings.enumerateWindows(nativeCallback);
-
-    return windows;
+    return List.from(_enumeratedWindows);
   }
 
   void setSettingString(String key, String value) {
