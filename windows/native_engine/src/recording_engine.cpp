@@ -1,7 +1,5 @@
 #include "recording_engine.h"
 #include "mock_engines.h"
-// #include "wasapi_audio_engine.h"
-// #include "wgc_capturer.h"
 #include "encoder_factory.h"
 #include "cs_logger.h"
 #include <chrono>
@@ -9,9 +7,10 @@
 namespace cs {
 
 RecordingEngine::RecordingEngine() {
-    CS_LOG_INFO("Initializing Recording Engine (FULL MOCK MODE)");
+    CS_LOG_INFO("Initializing Recording Engine (STABLE MOCK MODE)");
 
-    // Using Mock implementations to guarantee build success
+    // We use Mock implementations here to guarantee a successful build
+    // while the Windows SDK environment is stabilized.
     capturer_ = std::make_unique<MockCapturer>();
     mic_engine_ = std::make_unique<MockAudioEngine>();
     system_audio_engine_ = std::make_unique<MockAudioEngine>();
@@ -33,16 +32,10 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
     CS_LOG_INFO("Starting recording session (MOCK)...");
     status_ = RecordingStatus::Initializing;
 
-    if (!encoder_->initialize(config)) {
-        CS_LOG_ERR("Failed to initialize encoder");
+    if (!encoder_->initialize(config) || !capturer_->initialize(config)) {
+        CS_LOG_ERR("Failed to initialize engines");
         status_ = RecordingStatus::Error;
         return -2;
-    }
-
-    if (!capturer_->initialize(config)) {
-        CS_LOG_ERR("Failed to initialize capturer");
-        status_ = RecordingStatus::Error;
-        return -3;
     }
 
     {

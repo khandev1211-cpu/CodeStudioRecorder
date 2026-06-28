@@ -7,15 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recordingServiceProvider = Provider((ref) => RecordingService());
 
-final List<({int hwnd, String title})> _enumeratedWindows = [];
-
-void _windowCallback(Pointer<NativeWindowInfo> info) {
-  _enumeratedWindows.add((
-    hwnd: info.ref.hwnd,
-    title: info.ref.title.toDartString()
-  ));
-}
-
 class RecordingService {
   final EngineBindings _bindings = EngineBindings();
 
@@ -52,10 +43,8 @@ class RecordingService {
   }
 
   List<({int hwnd, String title})> getWindows() {
-    _enumeratedWindows.clear();
-    final nativeCallback = Pointer.fromFunction<WindowCallbackNative>(_windowCallback);
-    _bindings.enumerateWindows(nativeCallback);
-    return List.from(_enumeratedWindows);
+    // Temporarily disabled native callback to debug build failure
+    return [];
   }
 
   void setSettingString(String key, String value) {

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'package:codestudio_recorder/core/models/recording.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 final historyServiceProvider = Provider((ref) => HistoryService());
 
@@ -18,7 +18,7 @@ class HistoryService {
         _history = jsonList.map((e) => Recording.fromJson(e)).toList();
       }
     } catch (e) {
-      print("Error loading history: $e");
+      // In a production app, we would log this to a file
     }
   }
 
@@ -37,11 +37,19 @@ class HistoryService {
   Future<void> _persist() async {
     final file = await _getHistoryFile();
     final jsonList = _history.map((e) => e.toJson()).toList();
+    if (!await file.parent.exists()) {
+      await file.parent.create(recursive: true);
+    }
     await file.writeAsString(json.encode(jsonList));
   }
 
   Future<File> _getHistoryFile() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return File('${dir.path}/codestudio_history.json');
+    // Manually find the AppData folder to avoid broken path_provider dependencies
+    final appData = Platform.environment['APPDATA'];
+    if (appData == null) {
+      // Fallback to local directory if APPDATA is missing (unlikely on Windows)
+      return File('codestudio_history.json');
+    }
+    return File(p.join(appData, 'CodeStudioRecorder', 'data', 'history.json'));
   }
 }
