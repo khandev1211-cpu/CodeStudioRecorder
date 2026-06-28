@@ -22,6 +22,7 @@ struct RecordingConfig {
     const char* output_path;
     bool capture_cursor;
     bool capture_audio;
+    int64_t target_hwnd; // 0 for full screen
 };
 
 struct RecordingStats {

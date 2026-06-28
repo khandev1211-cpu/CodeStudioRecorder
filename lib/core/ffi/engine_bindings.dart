@@ -14,6 +14,22 @@ typedef GetStatsDart = void Function(Pointer<NativeRecordingStats>);
 typedef GetStatusNative = Int32 Function();
 typedef GetStatusDart = int Function();
 
+typedef WindowCallbackNative = Void Function(NativeWindowInfo);
+typedef EnumerateWindowsNative = Void Function(Pointer<NativeFunction<WindowCallbackNative>>);
+typedef EnumerateWindowsDart = void Function(Pointer<NativeFunction<WindowCallbackNative>>);
+
+typedef SetSettingStringNative = Void Function(Pointer<Utf8>, Pointer<Utf8>);
+typedef SetSettingStringDart = void Function(Pointer<Utf8>, Pointer<Utf8>);
+
+typedef GetSettingStringNative = Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>);
+typedef GetSettingStringDart = Pointer<Utf8> Function(Pointer<Utf8>, Pointer<Utf8>);
+
+typedef SetSettingIntNative = Void Function(Pointer<Utf8>, Int32);
+typedef SetSettingIntDart = void Function(Pointer<Utf8>, int);
+
+typedef GetSettingIntNative = Int32 Function(Pointer<Utf8>, Int32);
+typedef GetSettingIntDart = int Function(Pointer<Utf8>, int);
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -23,6 +39,12 @@ class EngineBindings {
   late final StopRecordingDart resumeRecording;
   late final GetStatsDart getStats;
   late final GetStatusDart getStatus;
+  late final EnumerateWindowsDart enumerateWindows;
+  
+  late final SetSettingStringDart setSettingString;
+  late final GetSettingStringDart getSettingString;
+  late final SetSettingIntDart setSettingInt;
+  late final GetSettingIntDart getSettingInt;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -54,6 +76,21 @@ class EngineBindings {
         .asFunction();
     getStatus = _lib
         .lookup<NativeFunction<GetStatusNative>>('cse_get_status')
+        .asFunction();
+    enumerateWindows = _lib
+        .lookup<NativeFunction<EnumerateWindowsNative>>('cse_enumerate_windows')
+        .asFunction();
+    setSettingString = _lib
+        .lookup<NativeFunction<SetSettingStringNative>>('cse_set_setting_string')
+        .asFunction();
+    getSettingString = _lib
+        .lookup<NativeFunction<GetSettingStringNative>>('cse_get_setting_string')
+        .asFunction();
+    setSettingInt = _lib
+        .lookup<NativeFunction<SetSettingIntNative>>('cse_set_setting_int')
+        .asFunction();
+    getSettingInt = _lib
+        .lookup<NativeFunction<GetSettingIntNative>>('cse_get_setting_int')
         .asFunction();
   }
 }

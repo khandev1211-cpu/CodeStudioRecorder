@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:codestudio_recorder/core/ffi/types/native_types.dart';
 import 'package:codestudio_recorder/core/services/recording_service.dart';
+import 'package:codestudio_recorder/core/services/history_service.dart';
+import 'package:codestudio_recorder/core/models/recording.dart';
 import 'dart:async';
+import 'package:intl/intl.dart';
 
 class RecordingState {
   final RecordingStatus status;
@@ -33,21 +36,38 @@ class RecordingState {
 
 class RecordingNotifier extends StateNotifier<RecordingState> {
   final RecordingService _service;
+  final HistoryService _historyService;
   Timer? _statsTimer;
+  String? _lastOutputPath;
 
-  RecordingNotifier(this._service) : super(RecordingState(status: RecordingStatus.idle));
+  RecordingNotifier(this._service, this._historyService) : super(RecordingState(status: RecordingStatus.idle));
 
-  Future<void> start(int width, int height, int fps, String outputPath) async {
-    final result = _service.start(width, height, fps, outputPath);
+  Future<void> start(int width, int height, int fps, String outputPath, int targetHwnd) async {
+    final result = _service.start(width, height, fps, outputPath, targetHwnd);
     if (result == 0) {
+      _lastOutputPath = outputPath;
       state = state.copyWith(status: RecordingStatus.recording);
       _startStatsPolling();
     }
   }
 
   Future<void> stop() async {
+    final stats = _service.getStats();
+    final duration = Duration(milliseconds: stats.elapsedMs);
+    
     final result = _service.stop();
     if (result == 0) {
+      if (_lastOutputPath != null) {
+        await _historyService.saveRecording(Recording(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: "Recording ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}",
+          filePath: _lastOutputPath!,
+          createdAt: DateTime.now(),
+          duration: duration,
+          fileSize: 0,
+        ));
+      }
+      
       state = state.copyWith(status: RecordingStatus.completed);
       _stopStatsPolling();
     }
@@ -79,5 +99,8 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
 }
 
 final recordingStateProvider = StateNotifierProvider<RecordingNotifier, RecordingState>((ref) {
-  return RecordingNotifier(ref.watch(recordingServiceProvider));
+  return RecordingNotifier(
+    ref.watch(recordingServiceProvider),
+    ref.watch(historyServiceProvider),
+  );
 });

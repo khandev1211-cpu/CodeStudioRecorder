@@ -13,6 +13,9 @@ add_library(codestudio_engine SHARED
     src/wasapi_audio_engine.cpp
     src/texture_pool.cpp
     src/ffmpeg_encoder.cpp
+    src/window_utils.cpp
+    src/settings_manager.cpp
+    src/encoder_factory.cpp
 )
 
 if(WIN32)

@@ -7,6 +7,8 @@
 #include <winrt/Windows.Graphics.Capture.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3d11.h>
 #include <dwmapi.h>
+#include <windows.graphics.capture.interop.h>
+#include <windows.graphics.capture.h>
 
 namespace cs {
 
@@ -36,25 +38,20 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
 
     device_ = inspectable.as<winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice>();
 
+    // 3. Create Capture Item for HWND
+    if (config.target_hwnd != 0) {
+        auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
+        hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<ABI::Windows::Graphics::Capture::IGraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
+        if (FAILED(hr)) return false;
+    }
+
     return true;
 }
 
 void WGCCapturer::start(FrameCallback callback) {
     callback_ = callback;
 
-    // For the MVP, we'll try to capture the foreground window or primary monitor.
-    // In this snippet, we'll use a hack to get the primary monitor if no item is set.
-
-    // Note: To capture a specific window, we'd use:
-    // HWND hwnd = GetForegroundWindow();
-    // auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
-    // hr = interop->CreateForWindow(hwnd, winrt::guid_of<ABI::Windows::Graphics::Capture::IGraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
-
-    // For now, let's assume 'item_' was somehow selected or we are capturing a default.
-    if (!item_) {
-        // Mocking item selection for now - in reality, we need user selection or a specific monitor handle
-        return;
-    }
+    if (!item_) return;
 
     frame_pool_ = winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool::CreateFreeThreaded(
         device_,

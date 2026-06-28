@@ -1,28 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:codestudio_recorder/features/home/home_screen.dart';
+import 'package:codestudio_recorder/app.dart';
+import 'package:codestudio_recorder/core/services/history_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  final container = ProviderContainer();
+  await container.read(historyServiceProvider).loadHistory();
+
   runApp(
-    const ProviderScope(
-      child: CodeStudioApp(),
+    UncontrolledProviderScope(
+      container: container,
+      child: const CodeStudioApp(),
     ),
   );
-}
-
-class CodeStudioApp extends StatelessWidget {
-  const CodeStudioApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CodeStudio Recorder',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.red,
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
-    );
-  }
 }

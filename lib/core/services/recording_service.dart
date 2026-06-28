@@ -9,7 +9,7 @@ final recordingServiceProvider = Provider((ref) => RecordingService());
 class RecordingService {
   final EngineBindings _bindings = EngineBindings();
 
-  int start(int width, int height, int fps, String outputPath) {
+  int start(int width, int height, int fps, String outputPath, int targetHwnd) {
     final config = calloc<NativeRecordingConfig>();
     config.ref.width = width;
     config.ref.height = height;
@@ -17,6 +17,7 @@ class RecordingService {
     config.ref.outputPath = outputPath.toNativeUtf8();
     config.ref.captureCursor = true;
     config.ref.captureAudio = true;
+    config.ref.targetHwnd = targetHwnd;
 
     final result = _bindings.startRecording(config);
     
@@ -40,5 +41,35 @@ class RecordingService {
     final result = stats.ref;
     // Note: This is simplified. Normally we'd copy the values and free the pointer.
     return result;
+  }
+
+  List<({int hwnd, String title})> getWindows() {
+    final windows = <({int hwnd, String title})>[];
+
+    void callback(NativeWindowInfo info) {
+      windows.add((hwnd: info.hwnd, title: info.title.toDartString()));
+    }
+
+    final nativeCallback = Pointer.fromFunction<WindowCallbackNative>(callback);
+    _bindings.enumerateWindows(nativeCallback);
+
+    return windows;
+  }
+
+  void setSettingString(String key, String value) {
+    _bindings.setSettingString(key.toNativeUtf8(), value.toNativeUtf8());
+  }
+
+  String getSettingString(String key, String defaultValue) {
+    final result = _bindings.getSettingString(key.toNativeUtf8(), defaultValue.toNativeUtf8());
+    return result.toDartString();
+  }
+
+  void setSettingInt(String key, int value) {
+    _bindings.setSettingInt(key.toNativeUtf8(), value);
+  }
+
+  int getSettingInt(String key, int defaultValue) {
+    return _bindings.getSettingInt(key.toNativeUtf8(), defaultValue);
   }
 }

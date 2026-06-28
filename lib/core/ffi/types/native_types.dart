@@ -27,6 +27,8 @@ final class NativeRecordingConfig extends Struct {
   external bool captureCursor;
   @Bool()
   external bool captureAudio;
+  @Int64()
+  external int targetHwnd;
 }
 
 final class NativeRecordingStats extends Struct {
@@ -36,4 +38,10 @@ final class NativeRecordingStats extends Struct {
   external int droppedFrames;
   @Float()
   external double encoderLoad;
+}
+
+final class NativeWindowInfo extends Struct {
+  @Int64()
+  external int hwnd;
+  external Pointer<Utf8> title;
 }
