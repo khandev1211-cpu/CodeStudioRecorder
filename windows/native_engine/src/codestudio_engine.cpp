@@ -89,6 +89,14 @@ public:
         engine_.undoAnnotation();
     }
 
+    void setZoomLevel(float level) {
+        engine_.setZoomLevel(level);
+    }
+
+    void setWebcamPosition(float x, float y, float width, float height) {
+        engine_.setWebcamPosition(x, y, width, height);
+    }
+
 private:
     cs::RecordingEngine engine_;
 };
@@ -178,6 +186,14 @@ CSE_API void cse_clear_annotations() {
 
 CSE_API void cse_undo_annotation() {
     SessionManager::instance().undoAnnotation();
+}
+
+CSE_API void cse_set_zoom_level(float level) {
+    SessionManager::instance().setZoomLevel(level);
+}
+
+CSE_API void cse_set_webcam_position(float x, float y, float width, float height) {
+    SessionManager::instance().setWebcamPosition(x, y, width, height);
 }
 
 } // extern "C"

@@ -33,6 +33,8 @@ add_library(codestudio_engine SHARED
     src/cursor_highlight_processor.cpp
     src/click_animation_processor.cpp
     src/annotation_processor.cpp
+    src/zoom_processor.cpp
+    src/webcam_processor.cpp
     src/db_manager.cpp
 )
 

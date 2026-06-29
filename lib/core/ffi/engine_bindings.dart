@@ -46,6 +46,12 @@ typedef ClearAnnotationsDart = void Function();
 typedef UndoAnnotationNative = Void Function();
 typedef UndoAnnotationDart = void Function();
 
+typedef SetZoomLevelNative = Void Function(Float);
+typedef SetZoomLevelDart = void Function(double);
+
+typedef SetWebcamPositionNative = Void Function(Float, Float, Float, Float);
+typedef SetWebcamPositionDart = void Function(double, double, double, double);
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -66,6 +72,8 @@ class EngineBindings {
   late final AddAnnotationDart addAnnotation;
   late final ClearAnnotationsDart clearAnnotations;
   late final UndoAnnotationDart undoAnnotation;
+  late final SetZoomLevelDart setZoomLevel;
+  late final SetWebcamPositionDart setWebcamPosition;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -87,7 +95,7 @@ class EngineBindings {
         .lookup<NativeFunction<StopRecordingNative>>('cse_stop_recording')
         .asFunction();
     pauseRecording = _lib
-        .lookup<NativeFunction<StopRecordingNative>>('cse_pause_recording') // Reusing Stop sig for now as they are same
+        .lookup<NativeFunction<StopRecordingNative>>('cse_pause_recording')
         .asFunction();
     resumeRecording = _lib
         .lookup<NativeFunction<StopRecordingNative>>('cse_resume_recording')
@@ -127,6 +135,12 @@ class EngineBindings {
         .asFunction();
     undoAnnotation = _lib
         .lookup<NativeFunction<UndoAnnotationNative>>('cse_undo_annotation')
+        .asFunction();
+    setZoomLevel = _lib
+        .lookup<NativeFunction<SetZoomLevelNative>>('cse_set_zoom_level')
+        .asFunction();
+    setWebcamPosition = _lib
+        .lookup<NativeFunction<SetWebcamPositionNative>>('cse_set_webcam_position')
         .asFunction();
   }
 }

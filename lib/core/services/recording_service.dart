@@ -131,4 +131,14 @@ class RecordingService {
     if (!_isInitialized) return;
     _bindings.undoAnnotation();
   }
+
+  void setZoomLevel(double level) {
+    if (!_isInitialized) return;
+    _bindings.setZoomLevel(level);
+  }
+
+  void setWebcamPosition(double x, double y, double width, double height) {
+    if (!_isInitialized) return;
+    _bindings.setWebcamPosition(x, y, width, height);
+  }
 }

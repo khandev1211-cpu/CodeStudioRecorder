@@ -12,74 +12,124 @@ class AnnotationToolbar extends ConsumerWidget {
     final notifier = ref.read(annotationProvider.notifier);
     final service = ref.read(recordingServiceProvider);
 
-    return Card(
-      elevation: 8,
-      color: Colors.black87,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ToolButton(
-              icon: Icons.horizontal_rule,
-              isSelected: state.tool == AnnotationTool.line,
-              onPressed: () => notifier.setTool(AnnotationTool.line),
-              tooltip: 'Line',
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (state.zoomEnabled)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Card(
+              color: Colors.black87,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.zoom_in, color: Colors.white70, size: 16),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 150,
+                      child: Slider(
+                        value: state.zoomLevel,
+                        min: 1.0,
+                        max: 3.0,
+                        onChanged: (val) => notifier.setZoomLevel(val),
+                        activeColor: const Color(0xFFFF3B3B),
+                      ),
+                    ),
+                    Text(
+                      '${state.zoomLevel.toStringAsFixed(1)}x',
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            _ToolButton(
-              icon: Icons.check_box_outline_blank,
-              isSelected: state.tool == AnnotationTool.rect,
-              onPressed: () => notifier.setTool(AnnotationTool.rect),
-              tooltip: 'Rectangle',
+          ),
+        Card(
+          elevation: 8,
+          color: Colors.black87,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ToolButton(
+                  icon: Icons.videocam_outlined,
+                  isSelected: state.webcamEnabled,
+                  onPressed: () => notifier.toggleWebcam(),
+                  tooltip: 'Toggle Webcam PiP',
+                ),
+                _ToolButton(
+                  icon: Icons.zoom_out_map,
+                  isSelected: state.zoomEnabled,
+                  onPressed: () => notifier.toggleZoom(),
+                  tooltip: 'Smart Zoom (follows cursor)',
+                ),
+                const VerticalDivider(color: Colors.white24, width: 20),
+                _ToolButton(
+                  icon: Icons.horizontal_rule,
+                  isSelected: state.tool == AnnotationTool.line,
+                  onPressed: () => notifier.setTool(AnnotationTool.line),
+                  tooltip: 'Line',
+                ),
+                _ToolButton(
+                  icon: Icons.check_box_outline_blank,
+                  isSelected: state.tool == AnnotationTool.rect,
+                  onPressed: () => notifier.setTool(AnnotationTool.rect),
+                  tooltip: 'Rectangle',
+                ),
+                _ToolButton(
+                  icon: Icons.panorama_fish_eye,
+                  isSelected: state.tool == AnnotationTool.ellipse,
+                  onPressed: () => notifier.setTool(AnnotationTool.ellipse),
+                  tooltip: 'Ellipse',
+                ),
+                _ToolButton(
+                  icon: Icons.arrow_outward,
+                  isSelected: state.tool == AnnotationTool.arrow,
+                  onPressed: () => notifier.setTool(AnnotationTool.arrow),
+                  tooltip: 'Arrow',
+                ),
+                const VerticalDivider(color: Colors.white24, width: 20),
+                _ColorButton(
+                  color: Colors.red,
+                  isSelected: state.color == Colors.red,
+                  onPressed: () => notifier.setColor(Colors.red),
+                ),
+                _ColorButton(
+                  color: Colors.yellow,
+                  isSelected: state.color == Colors.yellow,
+                  onPressed: () => notifier.setColor(Colors.yellow),
+                ),
+                _ColorButton(
+                  color: Colors.green,
+                  isSelected: state.color == Colors.green,
+                  onPressed: () => notifier.setColor(Colors.green),
+                ),
+                const VerticalDivider(color: Colors.white24, width: 20),
+                IconButton(
+                  icon: const Icon(Icons.undo, color: Colors.white),
+                  onPressed: () => service.undoAnnotation(),
+                  tooltip: 'Undo',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_sweep, color: Colors.white),
+                  onPressed: () => service.clearAnnotations(),
+                  tooltip: 'Clear All',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white54),
+                  onPressed: () => notifier.setTool(AnnotationTool.none),
+                  tooltip: 'Close Tool',
+                ),
+              ],
             ),
-            _ToolButton(
-              icon: Icons.panorama_fish_eye,
-              isSelected: state.tool == AnnotationTool.ellipse,
-              onPressed: () => notifier.setTool(AnnotationTool.ellipse),
-              tooltip: 'Ellipse',
-            ),
-            _ToolButton(
-              icon: Icons.arrow_outward,
-              isSelected: state.tool == AnnotationTool.arrow,
-              onPressed: () => notifier.setTool(AnnotationTool.arrow),
-              tooltip: 'Arrow',
-            ),
-            const VerticalDivider(color: Colors.white24, width: 20),
-            _ColorButton(
-              color: Colors.red,
-              isSelected: state.color == Colors.red,
-              onPressed: () => notifier.setColor(Colors.red),
-            ),
-            _ColorButton(
-              color: Colors.yellow,
-              isSelected: state.color == Colors.yellow,
-              onPressed: () => notifier.setColor(Colors.yellow),
-            ),
-            _ColorButton(
-              color: Colors.green,
-              isSelected: state.color == Colors.green,
-              onPressed: () => notifier.setColor(Colors.green),
-            ),
-            const VerticalDivider(color: Colors.white24, width: 20),
-            IconButton(
-              icon: const Icon(Icons.undo, color: Colors.white),
-              onPressed: () => service.undoAnnotation(),
-              tooltip: 'Undo',
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_sweep, color: Colors.white),
-              onPressed: () => service.clearAnnotations(),
-              tooltip: 'Clear All',
-            ),
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white54),
-              onPressed: () => notifier.setTool(AnnotationTool.none),
-              tooltip: 'Close Tool',
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

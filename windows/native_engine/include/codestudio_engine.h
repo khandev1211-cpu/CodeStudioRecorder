@@ -36,3 +36,5 @@ CSE_API void cse_report_mouse_click(float x, float y);
 CSE_API void cse_add_annotation(int32_t type, float x1, float y1, float x2, float y2, uint32_t color, float width);
 CSE_API void cse_clear_annotations();
 CSE_API void cse_undo_annotation();
+CSE_API void cse_set_zoom_level(float level);
+CSE_API void cse_set_webcam_position(float x, float y, float width, float height);

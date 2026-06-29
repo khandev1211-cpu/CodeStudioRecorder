@@ -12,6 +12,8 @@
 #include "cursor_highlight_processor.h"
 #include "click_animation_processor.h"
 #include "annotation_processor.h"
+#include "zoom_processor.h"
+#include "webcam_processor.h"
 #include "cs_logger.h"
 
 namespace cs {
@@ -26,9 +28,11 @@ RecordingEngine::RecordingEngine() {
     encoder_ = EncoderFactory::createEncoder();
     mixer_ = std::make_unique<AudioMixer>();
 
-    processors_.push_back(std::make_unique<CursorHighlightProcessor>());
-    processors_.push_back(std::make_unique<ClickAnimationProcessor>());
-    processors_.push_back(std::make_unique<AnnotationProcessor>());
+    processors_.push_back(std::make_unique<CursorHighlightProcessor>()); // 0
+    processors_.push_back(std::make_unique<ClickAnimationProcessor>());   // 1
+    processors_.push_back(std::make_unique<AnnotationProcessor>());       // 2
+    processors_.push_back(std::make_unique<ZoomProcessor>());             // 3
+    processors_.push_back(std::make_unique<WebcamProcessor>());           // 4
 }
 
 RecordingEngine::~RecordingEngine() {
@@ -168,6 +172,18 @@ void RecordingEngine::clearAnnotations() {
 void RecordingEngine::undoAnnotation() {
     if (processors_.size() > 2) {
         static_cast<AnnotationProcessor*>(processors_[2].get())->undo();
+    }
+}
+
+void RecordingEngine::setZoomLevel(float level) {
+    if (processors_.size() > 3) {
+        static_cast<ZoomProcessor*>(processors_[3].get())->setZoomLevel(level);
+    }
+}
+
+void RecordingEngine::setWebcamPosition(float x, float y, float width, float height) {
+    if (processors_.size() > 4) {
+        static_cast<WebcamProcessor*>(processors_[4].get())->setPosition(x, y, width, height);
     }
 }
 
