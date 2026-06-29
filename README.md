@@ -1,99 +1,81 @@
 # CodeStudio Recorder 🎥
 
-**CodeStudio Recorder** is a high-performance, professional-grade screen recording platform for Windows. Built with a **Flutter** frontend and a specialized **C++ Native Engine**, it is designed for creators, developers, and educators who need low-latency, high-fidelity captures with AI-powered features.
+**CodeStudio Recorder** is a high-performance, professional-grade screen recording platform for Windows. Built with a modern **Flutter** frontend and a specialized **C++20 Native Engine**, it is designed for creators, developers, and educators who need low-latency, high-fidelity captures with real-time visual effects.
 
+![Build Status](https://github.com/khandev1211-cpu/CodeStudioRecorder/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)
-![C++](https://img.shields.io/badge/C++-17-00599C?logo=c%2B%2B)
+![C++](https://img.shields.io/badge/C++-20-00599C?logo=c%2B%2B)
+
+---
+
+## 🚀 Project Status: Phase 2 (Creator Tools)
+The project is currently in **Phase 2: Professional Creator Tools**. We have successfully stabilized the hardware capture pipeline and are actively implementing real-time frame processors.
+
+- [x] **Real-time Cursor Highlighting** (Direct2D)
+- [x] **Expanding Click Animations** (Direct2D)
+- [x] **Automated Cloud Builds** (GitHub Actions)
+- [ ] **Smart Zoom** (In progress)
 
 ---
 
 ## ✨ Key Features
 
-### 🚀 Performance & Capture
-- **Hardware Accelerated**: Leverages NVENC (NVIDIA), QSV (Intel), and AMF (AMD) for zero-lag encoding.
-- **WGC Capture**: Uses modern Windows Graphics Capture API for high-frame-rate window and monitor recording.
-- **Audio Loopback**: High-quality system audio and microphone capture via WASAPI.
-- **Zero-Copy Pipeline**: Optimized frame transfer using lock-free ring buffers and texture pooling.
+### 🔥 Pro-Grade Performance
+- **WGC Capture**: Native integration with the Windows Graphics Capture API for 60FPS+ window and monitor recording.
+- **Hardware Accelerated**: Optimized paths for **NVENC** (NVIDIA), **QuickSync** (Intel), and **AMF** (AMD).
+- **Pro Audio**: Low-latency system loopback and microphone capture via **WASAPI**.
+- **Zero-Copy Pipeline**: Ultra-efficient frame transfer using lock-free SPSC ring buffers and pre-allocated GPU texture pools.
 
-### 🛠 Creator Tools (Phase 2+)
-- **Smart Zoom**: AI-powered cursor tracking that automatically zooms into active areas.
-- **Cursor Effects**: Highlighting, click animations, and ripple effects.
-- **Auto-Captions**: Local Whisper-based transcription for real-time burned-in subtitles.
-
-### 🔌 Extensibility
-- **Plugin SDK**: A robust C++ SDK for building custom overlays, encoders, and post-processors.
-- **Sandboxed Execution**: Plugins run in isolated processes for maximum stability.
+### 🛠 Professional Effects (Real-time)
+- **Cursor Focus**: Draw high-visibility highlights around the mouse cursor automatically.
+- **Visual Clicks**: Dynamic ripple animations appear exactly where you click in the recording.
+- **Permission Safe**: Smart path management handles Windows Security folder blocks automatically.
 
 ---
 
-## 🏗 Architecture Overview
+## 🏗 System Architecture
 
-CodeStudio follows a strict **Layered Architecture**:
+CodeStudio uses a strict **Layered Architecture** to ensure UI responsiveness and engine stability:
 
-1.  **Flutter UI Layer**: A reactive, modern interface built with Riverpod and GoRouter.
-2.  **FFI Bridge**: A high-performance Dart FFI layer for type-safe communication with the engine.
-3.  **Native Engine (C++)**: The performance core.
-    *   **CaptureEngine**: Manages D3D11 surfaces and WGC sessions.
-    *   **AudioEngine**: Handles WASAPI capture and mixing.
-    *   **EncodingEngine**: Coordinates hardware encoders and FFmpeg muxers.
+1.  **Flutter UI Layer**: A reactive Material 3 interface managed by **Riverpod**.
+2.  **FFI Bridge**: A type-safe Dart-to-C++ bridge using **dart:ffi**.
+3.  **Native Engine (C++20)**:
+    *   **CaptureEngine**: WinRT-based frame acquisition.
+    *   **AudioEngine**: WASAPI session management and mixing.
+    *   **ProcessorPipeline**: Direct2D-powered real-time frame effects.
+    *   **EncodingEngine**: FFmpeg-based hardware stream orchestration.
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- **Flutter SDK** (^3.11.5)
+- **Flutter SDK** (^3.4.0)
 - **Visual Studio 2022** (with "Desktop development with C++" workload)
-- **CMake** (3.10+)
-- **Windows 10 1903+** (Required for WGC)
-- **FFmpeg 6.0+ Development Libraries**:
-    - Download the **"dev"** and **"shared"** builds from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/).
-    - Create a folder `third_party/ffmpeg` in the project root.
-    - Copy the `include` folder from the **dev** build into `third_party/ffmpeg/`.
-    - Copy the `.lib` files from the `lib` folder of the **dev** build into `third_party/ffmpeg/lib/x64`.
-    - Copy the `.dll` files from the `bin` folder of the **shared** build into `windows/runner/` (so they are found by the executable).
+- **Windows 10 1903+** (Required for WGC support)
 
-### Installation & Build
+### Quick Start
+1. **Download**: Grab the latest `.zip` from the [Releases](https://github.com/khandev1211-cpu/CodeStudioRecorder/releases) page.
+2. **Run**: Extract and launch `codestudio_recorder.exe`.
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/khandev1211-cpu/CodeStudioRecorder.git
-    cd CodeStudioRecorder
-    ```
-
-2.  **Get Dart dependencies**:
-    ```bash
-    flutter pub get
-    ```
-
-3.  **Run the application**:
-    ```bash
-    flutter run -d windows
-    ```
+### Development Build
+```bash
+git clone https://github.com/khandev1211-cpu/CodeStudioRecorder.git
+cd CodeStudioRecorder
+flutter pub get
+flutter run -d windows
+```
 
 ---
 
 ## 🗺 Roadmap
 
-- **Phase 1 (MVP)**: Core recording coordination, WGC capture, WASAPI audio, and basic history/settings. (IN PROGRESS)
-- **Phase 2 (Professional Tools)**: Cursor effects, zoom-on-cursor, and export presets.
-- **Phase 3 (Plugins)**: SDK release and plugin host implementation.
-- **Phase 4 (AI)**: Local Whisper captions, smart zoom, and noise removal.
-- **Phase 5 (Streaming)**: RTMP support and multi-scene management.
-
-See [Roadmap.md](docs/12_Roadmap.md) for detailed milestones.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [Contributing Guidelines](docs/01_Project_Overview.md) before submitting pull requests.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- **Phase 1 (MVP)**: Core capture coordination, WASAPI audio, and history management. (STABLE)
+- **Phase 2 (Creator Tools)**: Cursor effects, click animations, zoom-on-cursor. (ACTIVE)
+- **Phase 3 (Plugins)**: C++ SDK for custom overlays and encoders.
+- **Phase 4 (AI Features)**: Local Whisper captions and Smart Zoom.
 
 ---
 
