@@ -28,11 +28,24 @@ void ZoomProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D11Devic
 
     POINT p;
     GetCursorPos(&p);
-    // TODO: Transform to client coordinates if recording specific window
+
+    float target_x = (float)p.x;
+    float target_y = (float)p.y;
+
+    if (config_.target_hwnd != 0) {
+        HWND hwnd = (HWND)config_.target_hwnd;
+        if (IsWindow(hwnd)) {
+            ScreenToClient(hwnd, &p);
+            target_x = (float)p.x;
+            target_y = (float)p.y;
+        }
+    }
 
     // Smoothing (Exponential Moving Average)
-    current_x_ = current_x_ * 0.9f + (float)p.x * 0.1f;
-    current_y_ = current_y_ * 0.9f + (float)p.y * 0.1f;
+    // Adjust smoothing factor based on preference (0.0 to 1.0)
+    const float lerp_factor = 0.15f;
+    current_x_ = current_x_ + (target_x - current_x_) * lerp_factor;
+    current_y_ = current_y_ + (target_y - current_y_) * lerp_factor;
 
     ID3D11Texture2D* source_texture = static_cast<ID3D11Texture2D*>(frame.data);
 
@@ -40,7 +53,19 @@ void ZoomProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D11Devic
     D3D11_TEXTURE2D_DESC desc;
     source_texture->GetDesc(&desc);
 
+    bool recreate_zoom_tex = false;
     if (!zoom_texture_) {
+        recreate_zoom_tex = true;
+    } else {
+        D3D11_TEXTURE2D_DESC current_zoom_desc;
+        zoom_texture_->GetDesc(&current_zoom_desc);
+        if (current_zoom_desc.Width != desc.Width || current_zoom_desc.Height != desc.Height) {
+            recreate_zoom_tex = true;
+        }
+    }
+
+    if (recreate_zoom_tex) {
+        zoom_texture_.Reset();
         device->CreateTexture2D(&desc, nullptr, &zoom_texture_);
     }
 
@@ -58,14 +83,13 @@ void ZoomProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D11Devic
 
     d2d_context_->SetTarget(targetBitmap.Get());
     d2d_context_->BeginDraw();
-    d2d_context_->Clear(D2D1::ColorF(0, 0, 0, 1));
 
-    // Calculate source rect based on zoom level and current cursor position
-    float src_w = desc.Width / zoom_level_;
-    float src_h = desc.Height / zoom_level_;
+    // Calculate source rect based on zoom level and smoothed cursor position
+    float src_w = (float)desc.Width / zoom_level_;
+    float src_h = (float)desc.Height / zoom_level_;
 
-    float left = std::clamp(current_x_ - src_w / 2, 0.0f, (float)desc.Width - src_w);
-    float top = std::clamp(current_y_ - src_h / 2, 0.0f, (float)desc.Height - src_h);
+    float left = std::clamp(current_x_ - src_w / 2.0f, 0.0f, (float)desc.Width - src_w);
+    float top = std::clamp(current_y_ - src_h / 2.0f, 0.0f, (float)desc.Height - src_h);
 
     D2D1_RECT_F srcRect = D2D1::RectF(left, top, left + src_w, top + src_h);
     D2D1_RECT_F destRect = D2D1::RectF(0, 0, (float)desc.Width, (float)desc.Height);

@@ -8,16 +8,43 @@ AudioMixer::AudioMixer() {}
 
 void AudioMixer::pushMicBuffer(const AudioBuffer& buffer) {
     std::lock_guard<std::mutex> lock(mutex_);
-    // Simple push for now. In a real app, we'd resample here if needed.
-    mic_queue_.insert(mic_queue_.end(), buffer.samples, buffer.samples + (buffer.frame_count * buffer.channels));
+
+    float peak = 0;
+    size_t count = buffer.frame_count * buffer.channels;
+    for (size_t i = 0; i < count; ++i) {
+        peak = std::max(peak, std::abs(buffer.samples[i]));
+    }
+    last_mic_peak_ = peak;
+
+    mic_queue_.insert(mic_queue_.end(), buffer.samples, buffer.samples + count);
 }
 
 void AudioMixer::pushSystemBuffer(const AudioBuffer& buffer) {
     std::lock_guard<std::mutex> lock(mutex_);
-    system_queue_.insert(system_queue_.end(), buffer.samples, buffer.samples + (buffer.frame_count * buffer.channels));
+
+    float peak = 0;
+    size_t count = buffer.frame_count * buffer.channels;
+    for (size_t i = 0; i < count; ++i) {
+        peak = std::max(peak, std::abs(buffer.samples[i]));
+    }
+    last_system_peak_ = peak;
+
+    system_queue_.insert(system_queue_.end(), buffer.samples, buffer.samples + count);
 }
 
 bool AudioMixer::getNextMixedBuffer(std::vector<float>& output, uint32_t& channels, uint32_t& sample_rate) {
+    // ... (rest of the method stays same)
+}
+
+void AudioMixer::getLevels(float* mic_level, float* system_level) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (mic_level) *mic_level = last_mic_peak_;
+    if (system_level) *system_level = last_system_peak_;
+
+    // Decay peaks slightly for smoother UI if not updated
+    last_mic_peak_ *= 0.8f;
+    last_system_peak_ *= 0.8f;
+}
     std::lock_guard<std::mutex> lock(mutex_);
 
     size_t samples_to_mix = std::min(mic_queue_.size(), system_queue_.size());

@@ -11,6 +11,11 @@ public:
     ZoomProcessor();
     ~ZoomProcessor() = default;
 
+    void onStart(const RecordingConfig& config) override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        config_ = config;
+    }
+
     void process(VideoFrame& frame, ID3D11Device* device, ID3D11DeviceContext* context) override;
 
     bool isEnabled() const override { return enabled_; }
@@ -27,6 +32,7 @@ private:
     bool enabled_ = false;
     float zoom_level_ = 1.5f;
     float current_x_ = 0, current_y_ = 0; // Smoothed center
+    RecordingConfig config_{};
     std::mutex mutex_;
 
     Microsoft::WRL::ComPtr<ID2D1Factory1> d2d_factory_;

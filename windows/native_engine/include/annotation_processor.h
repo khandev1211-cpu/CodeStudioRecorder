@@ -27,6 +27,10 @@ public:
     AnnotationProcessor();
     ~AnnotationProcessor() = default;
 
+    void onStart(const RecordingConfig& config) override {
+        config_ = config;
+    }
+
     void process(VideoFrame& frame, ID3D11Device* device, ID3D11DeviceContext* context) override;
 
     bool isEnabled() const override { return enabled_; }
@@ -41,6 +45,7 @@ private:
     void drawArrow(const AnnotationShape& shape);
 
     bool enabled_ = true;
+    RecordingConfig config_{};
     std::vector<AnnotationShape> shapes_;
     std::mutex mutex_;
 

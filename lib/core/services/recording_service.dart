@@ -31,11 +31,12 @@ class RecordingService {
 
   bool get isInitialized => _isInitialized;
 
-  int start(int width, int height, int fps, String outputPath, int targetHwnd) {
+  int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder) {
     if (!_isInitialized) return -999;
 
     final configPtr = calloc<NativeRecordingConfig>();
     final pathPtr = outputPath.toNativeUtf8();
+    final encoderPtr = encoder.toNativeUtf8();
     
     try {
       configPtr.ref.width = width;
@@ -45,12 +46,11 @@ class RecordingService {
       configPtr.ref.captureCursor = true;
       configPtr.ref.captureAudio = true;
       configPtr.ref.targetHwnd = targetHwnd;
+      configPtr.ref.encoderName = encoderPtr;
 
       return _bindings.startRecording(configPtr);
     } finally {
-      // Memory management: The engine copies strings on start, so we can free here.
-      // But we free the pointers in a real app after ensuring the engine is done.
-      // For MVP, we'll keep them for the duration of the call.
+      // Memory management: The engine copies strings on start
     }
   }
 
@@ -75,6 +75,19 @@ class RecordingService {
       );
     } finally {
       calloc.free(statsPtr);
+    }
+  }
+
+  ({double mic, double system}) getAudioLevels() {
+    if (!_isInitialized) return (mic: 0.0, system: 0.0);
+    final micPtr = calloc<Float>();
+    final sysPtr = calloc<Float>();
+    try {
+      _bindings.getAudioLevels(micPtr, sysPtr);
+      return (mic: micPtr.value, system: sysPtr.value);
+    } finally {
+      calloc.free(micPtr);
+      calloc.free(sysPtr);
     }
   }
 

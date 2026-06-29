@@ -83,9 +83,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
             onPanUpdate: (details) {
               if (isRecording && _startPoint != null && annState.tool != AnnotationTool.none) {
-                // Throttle updates or just send final on PanEnd?
-                // For a smooth experience, we send updates but the engine needs to handle "preview" shapes.
-                // For now, let\u0027s just send the shape on update to see it live.
+                final RenderBox renderBox = context.findRenderObject() as RenderBox;
+                final size = renderBox.size;
+                
+                // Scale coordinates from logical pixels to recording resolution
+                double scaleX = selectedProfile.width / size.width;
+                double scaleY = selectedProfile.height / size.height;
+
                 service.undoAnnotation(); // Remove previous preview
                 
                 int typeIndex = 0;
@@ -99,17 +103,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 service.addAnnotation(
                   typeIndex, 
-                  _startPoint!.dx, _startPoint!.dy, 
-                  details.localPosition.dx, details.localPosition.dy, 
+                  _startPoint!.dx * scaleX, _startPoint!.dy * scaleY, 
+                  details.localPosition.dx * scaleX, details.localPosition.dy * scaleY, 
                   annState.color.value, 
                   annState.strokeWidth
                 );
               }
             },
             onTapDown: (details) {
-              if (isRecording) {
-                service.reportMouseClick(details.localPosition.dx, details.localPosition.dy);
-              }
+              // Click reporting is now handled by the global native hook
+              // for better reliability across all applications.
             },
             child: Container(
               color: Colors.transparent, // Capture gestures
@@ -225,7 +228,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 selectedProfile.height, 
                                 selectedProfile.fps, 
                                 null, 
-                                hwnd
+                                hwnd,
+                                selectedProfile.encoder
                               );
                             },
                             icon: const Icon(Icons.fiber_manual_record),

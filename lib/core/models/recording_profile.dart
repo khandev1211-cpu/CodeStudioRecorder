@@ -10,6 +10,7 @@ class RecordingProfile {
   final bool clickAnimations;
   final bool smartZoom;
   final double zoomLevel;
+  final String encoder; // e.g. "auto", "h264_nvenc", "libx264"
 
   RecordingProfile({
     required this.id,
@@ -23,6 +24,7 @@ class RecordingProfile {
     this.clickAnimations = true,
     this.smartZoom = false,
     this.zoomLevel = 1.5,
+    this.encoder = "auto",
   });
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +39,7 @@ class RecordingProfile {
     'clickAnimations': clickAnimations,
     'smartZoom': smartZoom,
     'zoomLevel': zoomLevel,
+    'encoder': encoder,
   };
 
   factory RecordingProfile.fromJson(Map<String, dynamic> json) => RecordingProfile(
@@ -51,6 +54,7 @@ class RecordingProfile {
     clickAnimations: json['clickAnimations'] ?? true,
     smartZoom: json['smartZoom'] ?? false,
     zoomLevel: (json['zoomLevel'] ?? 1.5).toDouble(),
+    encoder: json['encoder'] ?? "auto",
   );
 
   static RecordingProfile defaultProfile() => RecordingProfile(

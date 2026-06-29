@@ -18,9 +18,15 @@ public:
     // Returns true if a full mix was produced
     bool getNextMixedBuffer(std::vector<float>& output, uint32_t& channels, uint32_t& sample_rate);
 
+    void getLevels(float* mic_level, float* system_level);
+
 private:
     std::vector<float> mic_queue_;
     std::vector<float> system_queue_;
+
+    float last_mic_peak_ = 0;
+    float last_system_peak_ = 0;
+
     std::mutex mutex_;
 
     uint32_t target_sample_rate_ = 48000;

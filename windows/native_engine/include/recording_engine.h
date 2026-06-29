@@ -24,6 +24,7 @@ public:
     int32_t resume();
 
     void getStats(RecordingStats* stats);
+    void getAudioLevels(float* mic_level, float* system_level);
     RecordingStatus getStatus() const;
     void setProcessorEnabled(int32_t index, bool enabled);
     void handleMouseClick(float x, float y);

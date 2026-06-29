@@ -24,6 +24,8 @@ public:
     void encodeAudioBuffer(const AudioBuffer& buffer) override;
     void finalize() override;
 
+    bool generateThumbnail(const std::string& video_path, const std::string& thumb_path) override;
+
 private:
     bool initVideo(const RecordingConfig& config);
     bool initAudio(const RecordingConfig& config);

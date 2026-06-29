@@ -11,6 +11,10 @@ public:
     CursorHighlightProcessor();
     ~CursorHighlightProcessor() = default;
 
+    void onStart(const RecordingConfig& config) override {
+        config_ = config;
+    }
+
     void process(VideoFrame& frame, ID3D11Device* device, ID3D11DeviceContext* context) override;
 
     bool isEnabled() const override { return enabled_; }
@@ -20,6 +24,7 @@ private:
     void initializeD2D(ID3D11Device* device);
 
     std::atomic<bool> enabled_{ true };
+    RecordingConfig config_{};
 
     Microsoft::WRL::ComPtr<ID2D1Factory1> d2d_factory_;
     Microsoft::WRL::ComPtr<ID2D1Device> d2d_device_;

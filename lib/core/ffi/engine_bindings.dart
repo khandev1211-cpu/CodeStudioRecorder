@@ -12,6 +12,9 @@ typedef StopRecordingDart = int Function();
 typedef GetStatsNative = Void Function(Pointer<NativeRecordingStats>);
 typedef GetStatsDart = void Function(Pointer<NativeRecordingStats>);
 
+typedef GetAudioLevelsNative = Void Function(Pointer<Float>, Pointer<Float>);
+typedef GetAudioLevelsDart = void Function(Pointer<Float>, Pointer<Float>);
+
 typedef GetStatusNative = Int32 Function();
 typedef GetStatusDart = int Function();
 
@@ -55,6 +58,9 @@ typedef SetWebcamPositionDart = void Function(double, double, double, double);
 typedef AddChapterMarkerNative = Void Function(Pointer<Utf8>);
 typedef AddChapterMarkerDart = void Function(Pointer<Utf8>);
 
+typedef GenerateThumbnailNative = Int32 Function(Pointer<Utf8>, Pointer<Utf8>);
+typedef GenerateThumbnailDart = int Function(Pointer<Utf8>, Pointer<Utf8>);
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -63,6 +69,7 @@ class EngineBindings {
   late final StopRecordingDart pauseRecording;
   late final StopRecordingDart resumeRecording;
   late final GetStatsDart getStats;
+  late final GetAudioLevelsDart getAudioLevels;
   late final GetStatusDart getStatus;
   late final EnumerateWindowsDart enumerateWindows;
   
@@ -78,6 +85,7 @@ class EngineBindings {
   late final SetZoomLevelDart setZoomLevel;
   late final SetWebcamPositionDart setWebcamPosition;
   late final AddChapterMarkerDart addChapterMarker;
+  late final GenerateThumbnailDart generateThumbnail;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -106,6 +114,9 @@ class EngineBindings {
         .asFunction();
     getStats = _lib
         .lookup<NativeFunction<GetStatsNative>>('cse_get_stats')
+        .asFunction();
+    getAudioLevels = _lib
+        .lookup<NativeFunction<GetAudioLevelsNative>>('cse_get_audio_levels')
         .asFunction();
     getStatus = _lib
         .lookup<NativeFunction<GetStatusNative>>('cse_get_status')
@@ -148,6 +159,9 @@ class EngineBindings {
         .asFunction();
     addChapterMarker = _lib
         .lookup<NativeFunction<AddChapterMarkerNative>>('cse_add_chapter_marker')
+        .asFunction();
+    generateThumbnail = _lib
+        .lookup<NativeFunction<GenerateThumbnailNative>>('cse_generate_thumbnail')
         .asFunction();
   }
 }

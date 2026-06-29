@@ -21,8 +21,21 @@ void ClickAnimationProcessor::initializeD2D(ID3D11Device* device) {
 }
 
 void ClickAnimationProcessor::addClick(float x, float y) {
+    float target_x = x;
+    float target_y = y;
+
+    if (config_.target_hwnd != 0) {
+        HWND hwnd = (HWND)config_.target_hwnd;
+        if (IsWindow(hwnd)) {
+            POINT p = { (long)x, (long)y };
+            ScreenToClient(hwnd, &p);
+            target_x = (float)p.x;
+            target_y = (float)p.y;
+        }
+    }
+
     std::lock_guard<std::mutex> lock(clicks_mutex_);
-    active_clicks_.push_back({ x, y, std::chrono::steady_clock::now(), 5.0f });
+    active_clicks_.push_back({ target_x, target_y, std::chrono::steady_clock::now(), 5.0f });
 }
 
 void ClickAnimationProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D11DeviceContext* context) {

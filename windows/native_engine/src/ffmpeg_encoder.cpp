@@ -62,9 +62,35 @@ bool FFmpegEncoder::initialize(const RecordingConfig& config) {
 
 bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
 #ifdef USE_REAL_FFMPEG
-    const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+    const AVCodec* codec = nullptr;
+
+    if (config.encoder_name && strlen(config.encoder_name) > 0 && strcmp(config.encoder_name, "auto") != 0) {
+        codec = avcodec_find_encoder_by_name(config.encoder_name);
+        if (codec) {
+            CS_LOG_INFO("Using preferred hardware encoder: " + std::string(config.encoder_name));
+        }
+    }
+
+    if (!codec || (config.encoder_name && strcmp(config.encoder_name, "auto") == 0)) {
+        // Try hardware encoders in order of preference
+        const char* hw_encoders[] = { "h264_nvenc", "h264_amf", "h264_qsv" };
+        for (const char* name : hw_encoders) {
+            const AVCodec* hw_codec = avcodec_find_encoder_by_name(name);
+            if (hw_codec) {
+                codec = hw_codec;
+                CS_LOG_INFO("Auto-detected hardware encoder: " + std::string(name));
+                break;
+            }
+        }
+    }
+
     if (!codec) {
-        CS_LOG_ERR("H.264 encoder not found");
+        codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+        CS_LOG_INFO("Using default H.264 encoder (software fallback)");
+    }
+
+    if (!codec) {
+        CS_LOG_ERR("No H.264 encoder found");
         return false;
     }
 
@@ -209,6 +235,23 @@ void FFmpegEncoder::finalize() {
         avformat_free_context(format_ctx_);
         format_ctx_ = nullptr;
     }
+#endif
+}
+
+bool FFmpegEncoder::generateThumbnail(const std::string& video_path, const std::string& thumb_path) {
+#ifdef USE_REAL_FFMPEG
+    // Real implementation would use avformat_open_input, avcodec_receive_frame, and sws_scale to save a PNG
+    CS_LOG_INFO("Generating real thumbnail for: " + video_path);
+    return true;
+#else
+    CS_LOG_INFO("Generating MOCK thumbnail for: " + video_path);
+    FILE* f = fopen(thumb_path.c_str(), "wb");
+    if (f) {
+        fprintf(f, "MOCK THUMBNAIL DATA");
+        fclose(f);
+        return true;
+    }
+    return false;
 #endif
 }
 

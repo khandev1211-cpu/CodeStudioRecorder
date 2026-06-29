@@ -19,6 +19,10 @@ public:
     ClickAnimationProcessor();
     ~ClickAnimationProcessor() = default;
 
+    void onStart(const RecordingConfig& config) override {
+        config_ = config;
+    }
+
     void process(VideoFrame& frame, ID3D11Device* device, ID3D11DeviceContext* context) override;
 
     bool isEnabled() const override { return enabled_; }
@@ -30,6 +34,7 @@ private:
     void initializeD2D(ID3D11Device* device);
 
     bool enabled_ = true;
+    RecordingConfig config_{};
     std::vector<ClickEvent> active_clicks_;
     std::mutex clicks_mutex_;
 

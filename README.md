@@ -70,6 +70,40 @@ flutter run -d windows
 
 ---
 
+## 📚 Documentation
+
+### 1. Project Structure
+- **`lib/`**: Flutter frontend implementation. Follows a feature-first structure using Riverpod for state management.
+- **`windows/native_engine/`**: High-performance C++20 backend.
+    - `src/`: Implementation of capture (WGC), audio (WASAPI), and encoding (FFmpeg).
+    - `include/`: Public headers for the Dart-C++ FFI bridge.
+
+### 2. Building from Source
+#### Flutter Frontend
+1. Install [Flutter SDK](https://docs.flutter.dev/get-started/install/windows).
+2. Run `flutter pub get` to fetch dependencies.
+3. Use `flutter run -d windows` to launch the application in debug mode.
+
+#### Native Engine (C++)
+The engine is automatically built by the Flutter toolchain using CMake.
+1. Ensure **Visual Studio 2022** with "Desktop development with C++" is installed.
+2. The build configuration is defined in `windows/CMakeLists.txt` and `windows/native_engine/CMakeLists.txt`.
+3. To build manually (advanced):
+   ```bash
+   cd windows
+   cmake -B build
+   cmake --build build --config Release
+   ```
+
+### 3. Key Components
+- **`CaptureEngine`**: Handles WinRT-based frame acquisition with zero-copy texture sharing.
+- **`AudioEngine`**: Manages WASAPI streams for system loopback and microphone input.
+- **`FFmpegEncoder`**: Orchestrates hardware encoders (NVENC, AMF, QSV) via the FFmpeg libraries.
+
+> For more detailed technical guides, check the [docs/](./docs) directory.
+
+---
+
 ## 🗺 Roadmap
 
 - **Phase 1 (MVP)**: Core capture coordination, WASAPI audio, and history management. (STABLE)

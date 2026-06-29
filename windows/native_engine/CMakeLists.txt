@@ -36,6 +36,7 @@ add_library(codestudio_engine SHARED
     src/zoom_processor.cpp
     src/webcam_processor.cpp
     src/db_manager.cpp
+    src/global_mouse_hook.cpp
 )
 
 if(WIN32)

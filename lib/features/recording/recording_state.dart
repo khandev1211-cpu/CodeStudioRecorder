@@ -13,12 +13,16 @@ class RecordingState {
   final Duration elapsedTime;
   final RecordingStats? stats;
   final String? lastError;
+  final double micLevel;
+  final double systemLevel;
 
   RecordingState({
     this.status = RecordingStatus.idle,
     this.elapsedTime = Duration.zero,
     this.stats,
     this.lastError,
+    this.micLevel = 0.0,
+    this.systemLevel = 0.0,
   });
 
   RecordingState copyWith({
@@ -26,12 +30,16 @@ class RecordingState {
     Duration? elapsedTime,
     RecordingStats? stats,
     String? lastError,
+    double? micLevel,
+    double? systemLevel,
   }) {
     return RecordingState(
       status: status ?? this.status,
       elapsedTime: elapsedTime ?? this.elapsedTime,
       stats: stats ?? this.stats,
       lastError: lastError ?? this.lastError,
+      micLevel: micLevel ?? this.micLevel,
+      systemLevel: systemLevel ?? this.systemLevel,
     );
   }
 }
@@ -44,7 +52,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
 
   RecordingNotifier(this._service, this._historyService) : super(RecordingState());
 
-  Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd) async {
+  Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd, String encoder) async {
     print("RecordingNotifier: Attempting to start recording...");
     state = state.copyWith(lastError: null);
     
@@ -55,6 +63,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
     }
 
     String outputPath = customPath ?? "";
+    // ...
     if (outputPath.isEmpty) {
       final userProfile = Platform.environment['USERPROFILE'] ?? '.';
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -90,8 +99,8 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
       }
     }
 
-    print("RecordingNotifier: Calling service.start with ${width}x${height}, $fps fps, path: $outputPath, hwnd: $targetHwnd");
-    final result = _service.start(width, height, fps, outputPath, targetHwnd);
+    print("RecordingNotifier: Calling service.start with ${width}x${height}, $fps fps, path: $outputPath, hwnd: $targetHwnd, encoder: $encoder");
+    final result = _service.start(width, height, fps, outputPath, targetHwnd, encoder);
     print("RecordingNotifier: service.start returned: $result");
     
     if (result == 0) {
@@ -129,14 +138,17 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
 
   void _startStatsPolling() {
     _statsTimer?.cancel();
-    _statsTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _statsTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       final stats = _service.getStats();
       final status = _service.status;
+      final levels = _service.getAudioLevels();
 
       state = state.copyWith(
         stats: stats,
         status: status,
         elapsedTime: Duration(milliseconds: stats.elapsedMs),
+        micLevel: levels.mic,
+        systemLevel: levels.system,
       );
 
       if (status == RecordingStatus.completed || status == RecordingStatus.error) {

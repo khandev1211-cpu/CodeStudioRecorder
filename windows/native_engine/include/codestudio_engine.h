@@ -39,3 +39,4 @@ CSE_API void cse_undo_annotation();
 CSE_API void cse_set_zoom_level(float level);
 CSE_API void cse_set_webcam_position(float x, float y, float width, float height);
 CSE_API void cse_add_chapter_marker(const char* label);
+CSE_API int32_t cse_generate_thumbnail(const char* video_path, const char* thumb_path);

@@ -14,6 +14,7 @@
 #include "recording_engine.h"
 #include "window_utils.h"
 #include "settings_manager.h"
+#include "encoder_factory.h"
 #include "cs_logger.h"
 
 // System headers last
@@ -63,6 +64,10 @@ public:
 
     void getStats(cs::RecordingStats* stats) {
         engine_.getStats(stats);
+    }
+
+    void getAudioLevels(float* mic, float* sys) {
+        engine_.getAudioLevels(mic, sys);
     }
 
     cs::RecordingStatus getStatus() const {
@@ -135,6 +140,10 @@ CSE_API void cse_get_stats(cs::RecordingStats* stats) {
     }
 }
 
+CSE_API void cse_get_audio_levels(float* mic, float* system) {
+    SessionManager::instance().getAudioLevels(mic, system);
+}
+
 CSE_API int32_t cse_get_status() {
     return static_cast<int32_t>(SessionManager::instance().getStatus());
 }
@@ -202,6 +211,12 @@ CSE_API void cse_set_webcam_position(float x, float y, float width, float height
 
 CSE_API void cse_add_chapter_marker(const char* label) {
     SessionManager::instance().addChapterMarker(label);
+}
+
+CSE_API int32_t cse_generate_thumbnail(const char* video_path, const char* thumb_path) {
+    if (!video_path || !thumb_path) return -1;
+    auto encoder = cs::EncoderFactory::createEncoder();
+    return encoder->generateThumbnail(video_path, thumb_path) ? 0 : -2;
 }
 
 } // extern "C"

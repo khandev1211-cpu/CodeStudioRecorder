@@ -29,6 +29,7 @@ final class NativeRecordingConfig extends Struct {
   external bool captureAudio;
   @Int64()
   external int targetHwnd;
+  external Pointer<Utf8> encoderName;
 }
 
 final class NativeRecordingStats extends Struct {

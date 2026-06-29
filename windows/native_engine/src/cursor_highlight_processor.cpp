@@ -39,12 +39,20 @@ void CursorHighlightProcessor::process(VideoFrame& frame, ID3D11Device* device, 
 
     POINT p;
     if (GetCursorPos(&p)) {
-        // This assumes full screen capture for now.
-        // For window capture, we would need to call ScreenToClient(hwnd, &p)
-        // using the HWND of the captured window.
+        float cursor_x = (float)p.x;
+        float cursor_y = (float)p.y;
+
+        if (config_.target_hwnd != 0) {
+            HWND hwnd = (HWND)config_.target_hwnd;
+            if (IsWindow(hwnd)) {
+                ScreenToClient(hwnd, &p);
+                cursor_x = (float)p.x;
+                cursor_y = (float)p.y;
+            }
+        }
 
         d2d_context_->FillEllipse(
-            D2D1::Ellipse(D2D1::Point2F((float)p.x, (float)p.y), 30.0f, 30.0f),
+            D2D1::Ellipse(D2D1::Point2F(cursor_x, cursor_y), 30.0f, 30.0f),
             highlight_brush_.Get()
         );
     }

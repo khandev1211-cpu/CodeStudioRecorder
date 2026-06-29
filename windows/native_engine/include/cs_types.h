@@ -23,6 +23,7 @@ struct RecordingConfig {
     bool capture_cursor;
     bool capture_audio;
     int64_t target_hwnd; // 0 for full screen
+    const char* encoder_name; // e.g. "h264_nvenc", "libx264"
 };
 
 struct RecordingStats {

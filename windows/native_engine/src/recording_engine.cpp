@@ -15,6 +15,9 @@
 #include "zoom_processor.h"
 #include "webcam_processor.h"
 #include "cs_logger.h"
+#include "global_mouse_hook.h"
+
+namespace cs {
 
 namespace cs {
 
@@ -76,6 +79,10 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
         }
     }
 
+    for (auto& processor : processors_) {
+        processor->onStart(config);
+    }
+
     {
         std::lock_guard<std::mutex> lock(stats_mutex_);
         stats_ = {};
@@ -83,6 +90,11 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
     }
 
     status_ = RecordingStatus::Recording;
+
+    // Start Global Mouse Hook to capture clicks anywhere on the screen
+    GlobalMouseHook::instance().start([this](float x, float y) {
+        this->handleMouseClick(x, y);
+    });
 
     capturer_->start([this](const VideoFrame& frame) { onVideoFrame(frame); });
 
@@ -101,6 +113,8 @@ int32_t RecordingEngine::stop() {
     }
 
     status_ = RecordingStatus::Flushing;
+
+    GlobalMouseHook::instance().stop();
 
     capturer_->stop();
     mic_engine_->stop();
@@ -134,6 +148,12 @@ void RecordingEngine::getStats(RecordingStats* stats) {
         stats_.elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
     }
     *stats = stats_;
+}
+
+void RecordingEngine::getAudioLevels(float* mic_level, float* system_level) {
+    if (mixer_) {
+        mixer_->getLevels(mic_level, system_level);
+    }
 }
 
 RecordingStatus RecordingEngine::getStatus() const {
