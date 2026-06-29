@@ -2,6 +2,8 @@ name: Build and Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -10,6 +12,8 @@ jobs:
   build:
     name: Build Windows App
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -19,7 +23,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # Removed specific version to use the latest available on stable
 
       - name: Install dependencies
         run: flutter pub get
@@ -28,9 +31,21 @@ jobs:
         run: flutter build windows --release
 
       - name: Package App
+        shell: pwsh
         run: |
-          cd build\windows\x64\runner\Release
-          compress-archive -Path * -DestinationPath ..\..\..\..\CodeStudioRecorder-Windows.zip
+          $buildDir = "build\windows\x64\runner\Release"
+          if (Test-Path $buildDir) {
+            Compress-Archive -Path "$buildDir\*" -DestinationPath "CodeStudioRecorder-Windows.zip" -Force
+          } else {
+            Write-Error "Build directory not found: $buildDir"
+            exit 1
+          }
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodeStudioRecorder-Windows
+          path: CodeStudioRecorder-Windows.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
