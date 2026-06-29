@@ -32,6 +32,7 @@ add_library(codestudio_engine SHARED
     src/cs_logger.cpp
     src/cursor_highlight_processor.cpp
     src/click_animation_processor.cpp
+    src/annotation_processor.cpp
     src/db_manager.cpp
 )
 

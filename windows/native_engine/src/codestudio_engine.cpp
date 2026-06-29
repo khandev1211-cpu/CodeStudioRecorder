@@ -77,6 +77,18 @@ public:
         engine_.handleMouseClick(x, y);
     }
 
+    void addAnnotation(int32_t type, float x1, float y1, float x2, float y2, uint32_t color, float width) {
+        engine_.addAnnotation(type, x1, y1, x2, y2, color, width);
+    }
+
+    void clearAnnotations() {
+        engine_.clearAnnotations();
+    }
+
+    void undoAnnotation() {
+        engine_.undoAnnotation();
+    }
+
 private:
     cs::RecordingEngine engine_;
 };
@@ -154,6 +166,18 @@ CSE_API void cse_set_processor_enabled(int32_t index, bool enabled) {
 
 CSE_API void cse_report_mouse_click(float x, float y) {
     SessionManager::instance().handleMouseClick(x, y);
+}
+
+CSE_API void cse_add_annotation(int32_t type, float x1, float y1, float x2, float y2, uint32_t color, float width) {
+    SessionManager::instance().addAnnotation(type, x1, y1, x2, y2, color, width);
+}
+
+CSE_API void cse_clear_annotations() {
+    SessionManager::instance().clearAnnotations();
+}
+
+CSE_API void cse_undo_annotation() {
+    SessionManager::instance().undoAnnotation();
 }
 
 } // extern "C"

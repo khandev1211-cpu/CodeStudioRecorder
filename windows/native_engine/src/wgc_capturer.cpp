@@ -1,4 +1,5 @@
 #include "wgc_capturer.h"
+#include "cs_logger.h"
 #include <inspectable.h>
 #include <unknwn.h>
 #include <winrt/base.h>
@@ -42,31 +43,42 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
         D3D11_CREATE_DEVICE_BGRA_SUPPORT, featureLevels, ARRAYSIZE(featureLevels),
         D3D11_SDK_VERSION, &d3d_device_, nullptr, nullptr);
 
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) {
+        CS_LOG_ERR("WGC: Failed to create D3D11 device: " + std::to_string(hr));
+        return false;
+    }
 
     d3d_device_->GetImmediateContext(&d3d_context_);
 
-    // Use winrt::com_ptr for COM interfaces
     winrt::com_ptr<IDXGIDevice> dxgiDevice;
     hr = d3d_device_->QueryInterface(__uuidof(IDXGIDevice), dxgiDevice.put_void());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) {
+        CS_LOG_ERR("WGC: Failed to query IDXGIDevice: " + std::to_string(hr));
+        return false;
+    }
 
     winrt::com_ptr<::IInspectable> inspectable;
     hr = CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.get(), inspectable.put());
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) {
+        CS_LOG_ERR("WGC: Failed to create Direct3D11 device from DXGI: " + std::to_string(hr));
+        return false;
+    }
 
     device_ = inspectable.as<winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice>();
 
+    auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
     if (config.target_hwnd != 0) {
-        auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
+        CS_LOG_INFO("WGC: Capturing HWND: " + std::to_string(config.target_hwnd));
         hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
-        if (FAILED(hr)) return false;
     } else {
-        // Full screen (Primary Monitor)
+        CS_LOG_INFO("WGC: Capturing Primary Monitor");
         HMONITOR hMonitor = MonitorFromWindow(nullptr, MONITOR_DEFAULTTOPRIMARY);
-        auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
         hr = interop->CreateForMonitor(hMonitor, winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
-        if (FAILED(hr)) return false;
+    }
+
+    if (FAILED(hr)) {
+        CS_LOG_ERR("WGC: Failed to create capture item: " + std::to_string(hr));
+        return false;
     }
 
     return true;

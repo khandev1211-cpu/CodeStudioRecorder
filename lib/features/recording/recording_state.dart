@@ -59,18 +59,32 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
       final userProfile = Platform.environment['USERPROFILE'] ?? '.';
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       
-      // Try to create a dedicated folder to avoid some security blocks
-      final appVideosDir = Directory(p.join(userProfile, 'Videos', 'CodeStudio'));
-      if (!appVideosDir.existsSync()) {
+      // Use a simpler fallback strategy
+      final List<String> possibleBaseDirs = [
+        p.join(userProfile, 'Videos'),
+        p.join(userProfile, 'Documents'),
+        userProfile,
+        '.',
+      ];
+
+      String? activeDir;
+      for (final base in possibleBaseDirs) {
+        final dir = Directory(p.join(base, 'CodeStudio'));
         try {
-          appVideosDir.createSync(recursive: true);
-        } catch (e) {
-          print("Failed to create Videos/CodeStudio folder, falling back to local: $e");
+          if (!dir.existsSync()) {
+            dir.createSync(recursive: true);
+          }
+          if (dir.existsSync()) {
+            activeDir = dir.path;
+            break;
+          }
+        } catch (_) {
+          continue;
         }
       }
-      
-      if (appVideosDir.existsSync()) {
-        outputPath = p.join(appVideosDir.path, 'Rec_${timestamp}.mp4');
+
+      if (activeDir != null) {
+        outputPath = p.join(activeDir, 'Rec_${timestamp}.mp4');
       } else {
         outputPath = p.join(userProfile, 'CodeStudio_Rec_${timestamp}.mp4');
       }

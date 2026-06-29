@@ -116,4 +116,19 @@ class RecordingService {
     if (!_isInitialized) return;
     _bindings.reportMouseClick(x, y);
   }
+
+  void addAnnotation(int type, double x1, double y1, double x2, double y2, int color, double width) {
+    if (!_isInitialized) return;
+    _bindings.addAnnotation(type, x1, y1, x2, y2, color, width);
+  }
+
+  void clearAnnotations() {
+    if (!_isInitialized) return;
+    _bindings.clearAnnotations();
+  }
+
+  void undoAnnotation() {
+    if (!_isInitialized) return;
+    _bindings.undoAnnotation();
+  }
 }

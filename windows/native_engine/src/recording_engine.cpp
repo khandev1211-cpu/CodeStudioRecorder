@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
+#include <string>
 
 #include "recording_engine.h"
 #include "mock_engines.h"
@@ -10,6 +11,7 @@
 #include "encoder_factory.h"
 #include "cursor_highlight_processor.h"
 #include "click_animation_processor.h"
+#include "annotation_processor.h"
 #include "cs_logger.h"
 
 namespace cs {
@@ -26,6 +28,7 @@ RecordingEngine::RecordingEngine() {
 
     processors_.push_back(std::make_unique<CursorHighlightProcessor>());
     processors_.push_back(std::make_unique<ClickAnimationProcessor>());
+    processors_.push_back(std::make_unique<AnnotationProcessor>());
 }
 
 RecordingEngine::~RecordingEngine() {
@@ -43,17 +46,17 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
 
     if (!encoder_->initialize(config)) {
         CS_LOG_ERR("Failed to initialize encoder");
-        status_ = RecordingStatus::Error;
+        status_ = RecordingStatus::Idle;
         return -2;
     }
 
     if (!capturer_->initialize(config)) {
         CS_LOG_ERR("Failed to initialize capturer");
-        status_ = RecordingStatus::Error;
+        encoder_->finalize();
+        status_ = RecordingStatus::Idle;
         return -3;
     }
 
-    // Optional audio initialization
     bool mic_ok = false;
     bool sys_ok = false;
     if (config.capture_audio) {
@@ -135,16 +138,41 @@ void RecordingEngine::setProcessorEnabled(int32_t index, bool enabled) {
 }
 
 void RecordingEngine::handleMouseClick(float x, float y) {
-    // Index 1 is ClickAnimationProcessor
     if (processors_.size() > 1) {
         auto* clickProc = static_cast<ClickAnimationProcessor*>(processors_[1].get());
         clickProc->addClick(x, y);
     }
 }
 
+void RecordingEngine::addAnnotation(int32_t type, float x1, float y1, float x2, float y2, uint32_t color, float width) {
+    if (processors_.size() > 2) {
+        auto* annProc = static_cast<AnnotationProcessor*>(processors_[2].get());
+        AnnotationShape shape;
+        shape.type = static_cast<AnnotationType>(type);
+        shape.x1 = x1;
+        shape.y1 = y1;
+        shape.x2 = x2;
+        shape.y2 = y2;
+        shape.color = color;
+        shape.stroke_width = width;
+        annProc->addShape(shape);
+    }
+}
+
+void RecordingEngine::clearAnnotations() {
+    if (processors_.size() > 2) {
+        static_cast<AnnotationProcessor*>(processors_[2].get())->clear();
+    }
+}
+
+void RecordingEngine::undoAnnotation() {
+    if (processors_.size() > 2) {
+        static_cast<AnnotationProcessor*>(processors_[2].get())->undo();
+    }
+}
+
 void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
     if (status_ == RecordingStatus::Recording) {
-        // Apply processors
         VideoFrame processedFrame = frame;
         for (auto& processor : processors_) {
             if (processor->isEnabled()) {

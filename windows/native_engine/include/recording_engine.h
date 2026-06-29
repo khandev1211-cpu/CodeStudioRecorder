@@ -27,6 +27,9 @@ public:
     RecordingStatus getStatus() const;
     void setProcessorEnabled(int32_t index, bool enabled);
     void handleMouseClick(float x, float y);
+    void addAnnotation(int32_t type, float x1, float y1, float x2, float y2, uint32_t color, float width);
+    void clearAnnotations();
+    void undoAnnotation();
 
 private:
     std::unique_ptr<ICapturer> capturer_;

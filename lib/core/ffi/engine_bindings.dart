@@ -37,6 +37,15 @@ typedef SetProcessorEnabledDart = void Function(int, bool);
 typedef ReportMouseClickNative = Void Function(Float, Float);
 typedef ReportMouseClickDart = void Function(double, double);
 
+typedef AddAnnotationNative = Void Function(Int32, Float, Float, Float, Float, Uint32, Float);
+typedef AddAnnotationDart = void Function(int, double, double, double, double, int, double);
+
+typedef ClearAnnotationsNative = Void Function();
+typedef ClearAnnotationsDart = void Function();
+
+typedef UndoAnnotationNative = Void Function();
+typedef UndoAnnotationDart = void Function();
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -54,6 +63,9 @@ class EngineBindings {
   late final GetSettingIntDart getSettingInt;
   late final SetProcessorEnabledDart setProcessorEnabled;
   late final ReportMouseClickDart reportMouseClick;
+  late final AddAnnotationDart addAnnotation;
+  late final ClearAnnotationsDart clearAnnotations;
+  late final UndoAnnotationDart undoAnnotation;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -75,7 +87,7 @@ class EngineBindings {
         .lookup<NativeFunction<StopRecordingNative>>('cse_stop_recording')
         .asFunction();
     pauseRecording = _lib
-        .lookup<NativeFunction<StopRecordingNative>>('cse_pause_recording')
+        .lookup<NativeFunction<StopRecordingNative>>('cse_pause_recording') // Reusing Stop sig for now as they are same
         .asFunction();
     resumeRecording = _lib
         .lookup<NativeFunction<StopRecordingNative>>('cse_resume_recording')
@@ -106,6 +118,15 @@ class EngineBindings {
         .asFunction();
     reportMouseClick = _lib
         .lookup<NativeFunction<ReportMouseClickNative>>('cse_report_mouse_click')
+        .asFunction();
+    addAnnotation = _lib
+        .lookup<NativeFunction<AddAnnotationNative>>('cse_add_annotation')
+        .asFunction();
+    clearAnnotations = _lib
+        .lookup<NativeFunction<ClearAnnotationsNative>>('cse_clear_annotations')
+        .asFunction();
+    undoAnnotation = _lib
+        .lookup<NativeFunction<UndoAnnotationNative>>('cse_undo_annotation')
         .asFunction();
   }
 }
