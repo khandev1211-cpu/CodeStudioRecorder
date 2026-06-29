@@ -141,4 +141,9 @@ class RecordingService {
     if (!_isInitialized) return;
     _bindings.setWebcamPosition(x, y, width, height);
   }
+
+  void addChapterMarker(String label) {
+    if (!_isInitialized) return;
+    _bindings.addChapterMarker(label.toNativeUtf8());
+  }
 }

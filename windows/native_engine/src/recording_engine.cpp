@@ -45,6 +45,11 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
         return -1;
     }
 
+    {
+        std::lock_guard<std::mutex> lock(markers_mutex_);
+        session_markers_.clear();
+    }
+
     CS_LOG_INFO("Starting recording session...");
     status_ = RecordingStatus::Initializing;
 
@@ -185,6 +190,28 @@ void RecordingEngine::setWebcamPosition(float x, float y, float width, float hei
     if (processors_.size() > 4) {
         static_cast<WebcamProcessor*>(processors_[4].get())->setPosition(x, y, width, height);
     }
+}
+
+void RecordingEngine::addChapterMarker(const std::string& label) {
+    if (status_ != RecordingStatus::Recording) return;
+
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
+
+    std::lock_guard<std::mutex> lock(markers_mutex_);
+    session_markers_.push_back({ elapsed, label });
+    CS_LOG_INFO("Added marker: " + label + " at " + std::to_string(elapsed) + "ms");
+}
+
+std::vector<ChapterMarker> RecordingEngine::getMarkers() const {
+    std::lock_guard<std::mutex> lock(markers_mutex_);
+    std::vector<ChapterMarker> result;
+    for (const auto& m : session_markers_) {
+        // Warning: pointers to strings in session_markers_ must stay valid
+        // This is safe if called right before stop() finishes
+        result.push_back({ m.timestamp_ms, m.label.c_str() });
+    }
+    return result;
 }
 
 void RecordingEngine::onVideoFrame(const VideoFrame& frame) {

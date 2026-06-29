@@ -97,6 +97,10 @@ public:
         engine_.setWebcamPosition(x, y, width, height);
     }
 
+    void addChapterMarker(const char* label) {
+        engine_.addChapterMarker(label ? label : "Marker");
+    }
+
 private:
     cs::RecordingEngine engine_;
 };
@@ -194,6 +198,10 @@ CSE_API void cse_set_zoom_level(float level) {
 
 CSE_API void cse_set_webcam_position(float x, float y, float width, float height) {
     SessionManager::instance().setWebcamPosition(x, y, width, height);
+}
+
+CSE_API void cse_add_chapter_marker(const char* label) {
+    SessionManager::instance().addChapterMarker(label);
 }
 
 } // extern "C"

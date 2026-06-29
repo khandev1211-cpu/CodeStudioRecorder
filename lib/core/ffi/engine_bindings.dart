@@ -52,6 +52,9 @@ typedef SetZoomLevelDart = void Function(double);
 typedef SetWebcamPositionNative = Void Function(Float, Float, Float, Float);
 typedef SetWebcamPositionDart = void Function(double, double, double, double);
 
+typedef AddChapterMarkerNative = Void Function(Pointer<Utf8>);
+typedef AddChapterMarkerDart = void Function(Pointer<Utf8>);
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -74,6 +77,7 @@ class EngineBindings {
   late final UndoAnnotationDart undoAnnotation;
   late final SetZoomLevelDart setZoomLevel;
   late final SetWebcamPositionDart setWebcamPosition;
+  late final AddChapterMarkerDart addChapterMarker;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -141,6 +145,9 @@ class EngineBindings {
         .asFunction();
     setWebcamPosition = _lib
         .lookup<NativeFunction<SetWebcamPositionNative>>('cse_set_webcam_position')
+        .asFunction();
+    addChapterMarker = _lib
+        .lookup<NativeFunction<AddChapterMarkerNative>>('cse_add_chapter_marker')
         .asFunction();
   }
 }

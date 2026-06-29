@@ -32,6 +32,8 @@ public:
     void undoAnnotation();
     void setZoomLevel(float level);
     void setWebcamPosition(float x, float y, float width, float height);
+    void addChapterMarker(const std::string& label);
+    std::vector<ChapterMarker> getMarkers() const;
 
 private:
     std::unique_ptr<ICapturer> capturer_;
@@ -40,6 +42,13 @@ private:
     std::unique_ptr<IEncoder> encoder_;
     std::unique_ptr<AudioMixer> mixer_;
     std::vector<std::unique_ptr<IFrameProcessor>> processors_;
+
+    struct MarkerInternal {
+        int64_t timestamp_ms;
+        std::string label;
+    };
+    std::vector<MarkerInternal> session_markers_;
+    mutable std::mutex markers_mutex_;
 
     std::atomic<RecordingStatus> status_{RecordingStatus::Idle};
     mutable std::mutex stats_mutex_;

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:codestudio_recorder/features/home/home_screen.dart';
 import 'package:codestudio_recorder/features/history/history_screen.dart';
 import 'package:codestudio_recorder/features/settings/settings_screen.dart';
+import 'package:codestudio_recorder/features/profiles/profiles_screen.dart';
 
 final _router = GoRouter(
   initialLocation: '/',
@@ -18,6 +19,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/profiles',
+      builder: (context, state) => const ProfilesScreen(),
     ),
   ],
 );

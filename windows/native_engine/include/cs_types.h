@@ -31,4 +31,9 @@ struct RecordingStats {
     float encoder_load;
 };
 
+struct ChapterMarker {
+    int64_t timestamp_ms;
+    const char* label;
+};
+
 } // namespace cs

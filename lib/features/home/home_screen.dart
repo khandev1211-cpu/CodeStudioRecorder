@@ -9,6 +9,9 @@ import 'package:codestudio_recorder/shared/theme/app_logo.dart';
 import 'package:codestudio_recorder/features/recording/annotation_toolbar.dart';
 import 'package:codestudio_recorder/features/recording/annotation_state.dart';
 
+import 'package:codestudio_recorder/core/models/recording_profile.dart';
+import 'package:codestudio_recorder/core/services/profile_service.dart';
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -27,6 +30,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final selectedWindow = ref.watch(selectedWindowProvider);
     final service = ref.read(recordingServiceProvider);
     final annState = ref.watch(annotationProvider);
+    final profileService = ref.watch(profileServiceProvider);
+    final selectedProfile = ref.watch(selectedProfileProvider);
 
     final isRecording = recordingState.status == RecordingStatus.recording;
 
@@ -46,6 +51,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const AppLogo(size: 32, showText: true),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.description),
+            tooltip: 'Recording Profiles',
+            onPressed: () => context.go('/profiles'),
+          ),
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () => context.go('/history'),
@@ -128,6 +138,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ] else ...[
                       const SizedBox(height: 20),
+                      const Text("Recording Profile:"),
+                      const SizedBox(height: 5),
+                      Container(
+                        width: 400,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white24),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButton<String>(
+                          value: selectedProfile.id,
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          items: profileService.profiles.map((p) => DropdownMenuItem(
+                            value: p.id,
+                            child: Text(p.name),
+                          )).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              final profile = profileService.profiles.firstWhere((p) => p.id == val);
+                              ref.read(selectedProfileProvider.notifier).state = profile;
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       const Text("Select target to record:"),
                       const SizedBox(height: 10),
                       Container(
@@ -175,7 +211,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ElevatedButton.icon(
                             onPressed: () {
                               final hwnd = ref.read(selectedWindowProvider)?.hwnd ?? 0;
-                              recordingNotifier.start(1920, 1080, 60, null, hwnd);
+                              
+                              // Apply profile settings before starting
+                              service.setProcessorEnabled(0, selectedProfile.cursorHighlight);
+                              service.setProcessorEnabled(1, selectedProfile.clickAnimations);
+                              service.setProcessorEnabled(3, selectedProfile.smartZoom);
+                              if (selectedProfile.smartZoom) {
+                                service.setZoomLevel(selectedProfile.zoomLevel);
+                              }
+
+                              recordingNotifier.start(
+                                selectedProfile.width, 
+                                selectedProfile.height, 
+                                selectedProfile.fps, 
+                                null, 
+                                hwnd
+                              );
                             },
                             icon: const Icon(Icons.fiber_manual_record),
                             label: const Text('START RECORDING'),
@@ -186,13 +237,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                           )
                         else
-                          ElevatedButton.icon(
-                            onPressed: () => recordingNotifier.stop(),
-                            icon: const Icon(Icons.stop),
-                            label: const Text('STOP RECORDING'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: () => _showAddMarkerDialog(context, service),
+                                icon: const Icon(Icons.bookmark_add),
+                                label: const Text('MARK'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white10,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton.icon(
+                                onPressed: () => recordingNotifier.stop(),
+                                icon: const Icon(Icons.stop),
+                                label: const Text('STOP RECORDING'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                ),
+                              ),
+                            ],
                           ),
                       ],
                     ),
@@ -240,5 +306,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
     return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  }
+
+  void _showAddMarkerDialog(BuildContext context, RecordingService service) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Chapter Marker'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'e.g. Setting up UI'),
+          onSubmitted: (_) {
+            service.addChapterMarker(controller.text);
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () {
+              service.addChapterMarker(controller.text);
+              Navigator.pop(context);
+            },
+            child: const Text('ADD'),
+          ),
+        ],
+      ),
+    );
   }
 }
