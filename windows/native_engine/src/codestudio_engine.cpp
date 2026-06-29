@@ -38,7 +38,15 @@ public:
     }
 
     int32_t beginSession(const cs::RecordingConfig& config) {
-        return engine_.start(config);
+        try {
+            return engine_.start(config);
+        } catch (const std::exception& e) {
+            CS_LOG_ERR("Exception in beginSession: " + std::string(e.what()));
+            return -100;
+        } catch (...) {
+            CS_LOG_ERR("Unknown exception in beginSession");
+            return -101;
+        }
     }
 
     int32_t endSession() {
@@ -65,6 +73,10 @@ public:
         engine_.setProcessorEnabled(index, enabled);
     }
 
+    void handleMouseClick(float x, float y) {
+        engine_.handleMouseClick(x, y);
+    }
+
 private:
     cs::RecordingEngine engine_;
 };
@@ -72,10 +84,12 @@ private:
 extern "C" {
 
 CSE_API int32_t cse_start_recording(cs::RecordingConfig* config) {
+    CS_LOG_INFO("cse_start_recording called");
     if (!config) {
         CS_LOG_ERR("cse_start_recording: config is null");
         return -1;
     }
+    CS_LOG_INFO("Config: " + std::to_string(config->width) + "x" + std::to_string(config->height) + " @ " + std::to_string(config->fps) + "fps");
     return SessionManager::instance().beginSession(*config);
 }
 
@@ -136,6 +150,10 @@ CSE_API int32_t cse_get_setting_int(const char* key, int32_t default_value) {
 
 CSE_API void cse_set_processor_enabled(int32_t index, bool enabled) {
     SessionManager::instance().setProcessorEnabled(index, enabled);
+}
+
+CSE_API void cse_report_mouse_click(float x, float y) {
+    SessionManager::instance().handleMouseClick(x, y);
 }
 
 } // extern "C"

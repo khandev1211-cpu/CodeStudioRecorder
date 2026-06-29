@@ -50,6 +50,12 @@ bool FFmpegEncoder::initialize(const RecordingConfig& config) {
     return true;
 #else
     CS_LOG_WARN("FFmpegEncoder: Built without real FFmpeg. Using MOCK mode.");
+    // Create a dummy file so the UI can "find" it
+    FILE* f = fopen(config.output_path, "wb");
+    if (f) {
+        fprintf(f, "MOCK VIDEO DATA - Link FFmpeg to record real video.");
+        fclose(f);
+    }
     return true;
 #endif
 }

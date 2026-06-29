@@ -24,7 +24,11 @@ IDirect3DDXGIInterfaceAccess : ::IUnknown
 namespace cs {
 
 WGCCapturer::WGCCapturer() {
-    winrt::init_apartment();
+    try {
+        winrt::init_apartment(winrt::apartment_type::multi_threaded);
+    } catch (...) {
+        // Already initialized, ignore
+    }
 }
 
 WGCCapturer::~WGCCapturer() {
@@ -40,6 +44,8 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
 
     if (FAILED(hr)) return false;
 
+    d3d_device_->GetImmediateContext(&d3d_context_);
+
     // Use winrt::com_ptr for COM interfaces
     winrt::com_ptr<IDXGIDevice> dxgiDevice;
     hr = d3d_device_->QueryInterface(__uuidof(IDXGIDevice), dxgiDevice.put_void());
@@ -54,6 +60,12 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
     if (config.target_hwnd != 0) {
         auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
         hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
+        if (FAILED(hr)) return false;
+    } else {
+        // Full screen (Primary Monitor)
+        HMONITOR hMonitor = MonitorFromWindow(nullptr, MONITOR_DEFAULTTOPRIMARY);
+        auto interop = winrt::get_activation_factory<winrt::Windows::Graphics::Capture::GraphicsCaptureItem, IGraphicsCaptureItemInterop>();
+        hr = interop->CreateForMonitor(hMonitor, winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
         if (FAILED(hr)) return false;
     }
 

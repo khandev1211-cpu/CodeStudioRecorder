@@ -31,6 +31,7 @@ add_library(codestudio_engine SHARED
     src/audio_mixer.cpp
     src/cs_logger.cpp
     src/cursor_highlight_processor.cpp
+    src/click_animation_processor.cpp
     src/db_manager.cpp
 )
 

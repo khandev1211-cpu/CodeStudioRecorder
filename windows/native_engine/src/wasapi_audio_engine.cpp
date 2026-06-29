@@ -7,7 +7,10 @@
 namespace cs {
 
 WASAPIAudioEngine::WASAPIAudioEngine(DeviceMode mode) : mode_(mode) {
-    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) {
+        // Log error if needed
+    }
 }
 
 WASAPIAudioEngine::~WASAPIAudioEngine() {

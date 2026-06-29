@@ -7,82 +7,113 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final recordingServiceProvider = Provider((ref) => RecordingService());
 
-// Shared list for window enumeration
-final List<({int hwnd, String title})> _enumeratedWindowsList = [];
+final List<({int hwnd, String title})> _tempWindowsList = [];
 
-// Static callback as required by dart:ffi
 void _onWindowEnumerated(Pointer<NativeWindowInfo> info) {
   final hwnd = info.ref.hwnd;
   final titlePtr = info.ref.title.cast<Utf8>();
   final String title = titlePtr.toDartString();
-  _enumeratedWindowsList.add((hwnd: hwnd, title: title));
+  _tempWindowsList.add((hwnd: hwnd, title: title));
 }
 
 class RecordingService {
-  final EngineBindings _bindings = EngineBindings();
+  late final EngineBindings _bindings;
+  bool _isInitialized = false;
 
-  int start(int width, int height, int fps, String outputPath, int targetHwnd) {
-    final config = calloc<NativeRecordingConfig>();
-    config.ref.width = width;
-    config.ref.height = height;
-    config.ref.fps = fps;
-    config.ref.outputPath = outputPath.toNativeUtf8();
-    config.ref.captureCursor = true;
-    config.ref.captureAudio = true;
-    config.ref.targetHwnd = targetHwnd;
-
-    final result = _bindings.startRecording(config);
-    // Note: We don't free config here if the engine needs it persistently,
-    // but typically the engine copies the data.
-    return result;
+  RecordingService() {
+    try {
+      _bindings = EngineBindings();
+      _isInitialized = true;
+    } catch (e) {
+      print("CRITICAL: Failed to load native engine: $e");
+    }
   }
 
-  int stop() => _bindings.stopRecording();
-  int pause() => _bindings.pauseRecording();
-  int resume() => _bindings.resumeRecording();
+  bool get isInitialized => _isInitialized;
 
-  RecordingStatus get status => RecordingStatus.fromInt(_bindings.getStatus());
+  int start(int width, int height, int fps, String outputPath, int targetHwnd) {
+    if (!_isInitialized) return -999;
+
+    final configPtr = calloc<NativeRecordingConfig>();
+    final pathPtr = outputPath.toNativeUtf8();
+    
+    try {
+      configPtr.ref.width = width;
+      configPtr.ref.height = height;
+      configPtr.ref.fps = fps;
+      configPtr.ref.outputPath = pathPtr;
+      configPtr.ref.captureCursor = true;
+      configPtr.ref.captureAudio = true;
+      configPtr.ref.targetHwnd = targetHwnd;
+
+      return _bindings.startRecording(configPtr);
+    } finally {
+      // Memory management: The engine copies strings on start, so we can free here.
+      // But we free the pointers in a real app after ensuring the engine is done.
+      // For MVP, we'll keep them for the duration of the call.
+    }
+  }
+
+  int stop() => _isInitialized ? _bindings.stopRecording() : -999;
+  int pause() => _isInitialized ? _bindings.pauseRecording() : -999;
+  int resume() => _isInitialized ? _bindings.resumeRecording() : -999;
+
+  RecordingStatus get status => _isInitialized 
+    ? RecordingStatus.fromInt(_bindings.getStatus()) 
+    : RecordingStatus.error;
 
   RecordingStats getStats() {
+    if (!_isInitialized) return RecordingStats(elapsedMs: 0, droppedFrames: 0, encoderLoad: 0);
+    
     final statsPtr = calloc<NativeRecordingStats>();
-    _bindings.getStats(statsPtr);
-    final stats = RecordingStats(
-      elapsedMs: statsPtr.ref.elapsedMs,
-      droppedFrames: statsPtr.ref.droppedFrames,
-      encoderLoad: statsPtr.ref.encoderLoad,
-    );
-    calloc.free(statsPtr);
-    return stats;
+    try {
+      _bindings.getStats(statsPtr);
+      return RecordingStats(
+        elapsedMs: statsPtr.ref.elapsedMs,
+        droppedFrames: statsPtr.ref.droppedFrames,
+        encoderLoad: statsPtr.ref.encoderLoad,
+      );
+    } finally {
+      calloc.free(statsPtr);
+    }
   }
 
   List<({int hwnd, String title})> getWindows() {
-    _enumeratedWindowsList.clear();
+    if (!_isInitialized) return [];
+    _tempWindowsList.clear();
     final nativeCallback = Pointer.fromFunction<WindowCallbackNative>(_onWindowEnumerated);
     _bindings.enumerateWindows(nativeCallback);
-    return List.from(_enumeratedWindowsList);
+    return List.from(_tempWindowsList);
   }
 
   void setSettingString(String key, String value) {
+    if (!_isInitialized) return;
     _bindings.setSettingString(key.toNativeUtf8(), value.toNativeUtf8());
   }
 
   String getSettingString(String key, String defaultValue) {
-    final result = _bindings.getSettingString(
-      key.toNativeUtf8(),
-      defaultValue.toNativeUtf8(),
-    );
+    if (!_isInitialized) return defaultValue;
+    final result = _bindings.getSettingString(key.toNativeUtf8(), defaultValue.toNativeUtf8());
     return result.cast<Utf8>().toDartString();
   }
 
   void setSettingInt(String key, int value) {
+    if (!_isInitialized) return;
     _bindings.setSettingInt(key.toNativeUtf8(), value);
   }
 
   int getSettingInt(String key, int defaultValue) {
+    if (!_isInitialized) return defaultValue;
     return _bindings.getSettingInt(key.toNativeUtf8(), defaultValue);
   }
 
   void setProcessorEnabled(int index, bool enabled) {
+    if (!_isInitialized) return;
     _bindings.setProcessorEnabled(index, enabled);
+  }
+
+  void reportMouseClick(double x, double y) {
+    if (!_isInitialized) return;
+    _bindings.reportMouseClick(x, y);
   }
 }

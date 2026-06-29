@@ -9,6 +9,7 @@
 #include "wgc_capturer.h"
 #include "encoder_factory.h"
 #include "cursor_highlight_processor.h"
+#include "click_animation_processor.h"
 #include "cs_logger.h"
 
 namespace cs {
@@ -24,6 +25,7 @@ RecordingEngine::RecordingEngine() {
     mixer_ = std::make_unique<AudioMixer>();
 
     processors_.push_back(std::make_unique<CursorHighlightProcessor>());
+    processors_.push_back(std::make_unique<ClickAnimationProcessor>());
 }
 
 RecordingEngine::~RecordingEngine() {
@@ -52,9 +54,13 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
     }
 
     // Optional audio initialization
+    bool mic_ok = false;
+    bool sys_ok = false;
     if (config.capture_audio) {
-        if (!mic_engine_->initialize(config) || !system_audio_engine_->initialize(config)) {
-            CS_LOG_WARN("Failed to initialize audio, continuing without it");
+        mic_ok = mic_engine_->initialize(config);
+        sys_ok = system_audio_engine_->initialize(config);
+        if (!mic_ok || !sys_ok) {
+            CS_LOG_WARN("Failed to initialize audio, some streams may be missing");
         }
     }
 
@@ -69,8 +75,8 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
     capturer_->start([this](const VideoFrame& frame) { onVideoFrame(frame); });
 
     if (config.capture_audio) {
-        mic_engine_->start([this](const AudioBuffer& buffer) { onMicBuffer(buffer); });
-        system_audio_engine_->start([this](const AudioBuffer& buffer) { onSystemBuffer(buffer); });
+        if (mic_ok) mic_engine_->start([this](const AudioBuffer& buffer) { onMicBuffer(buffer); });
+        if (sys_ok) system_audio_engine_->start([this](const AudioBuffer& buffer) { onSystemBuffer(buffer); });
     }
 
     CS_LOG_INFO("Recording started successfully");
@@ -123,8 +129,16 @@ RecordingStatus RecordingEngine::getStatus() const {
 }
 
 void RecordingEngine::setProcessorEnabled(int32_t index, bool enabled) {
-    if (index >= 0 && index < processors_.size()) {
+    if (index >= 0 && index < (int32_t)processors_.size()) {
         processors_[index]->setEnabled(enabled);
+    }
+}
+
+void RecordingEngine::handleMouseClick(float x, float y) {
+    // Index 1 is ClickAnimationProcessor
+    if (processors_.size() > 1) {
+        auto* clickProc = static_cast<ClickAnimationProcessor*>(processors_[1].get());
+        clickProc->addClick(x, y);
     }
 }
 

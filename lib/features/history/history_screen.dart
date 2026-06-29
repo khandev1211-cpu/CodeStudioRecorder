@@ -63,18 +63,21 @@ class HistoryScreen extends ConsumerWidget {
   Future<void> _openFolder(String filePath) async {
     final file = File(filePath);
     final folder = file.parent;
-    // For Windows, opening a directory URL works with launchUrl
-    final uri = Uri.directory(folder.path);
-    if (!await launchUrl(uri)) {
-      // Fallback or error logging
+    if (await folder.exists()) {
+      // On Windows, explorer /select,path is best but launchUrl works for directory
+      final uri = Uri.directory(folder.path);
+      await launchUrl(uri);
     }
   }
 
   Future<void> _playFile(String filePath) async {
     final file = File(filePath);
-    final uri = Uri.file(file.path);
-    if (!await launchUrl(uri)) {
-      // Fallback or error logging
+    if (await file.exists()) {
+      final uri = Uri.file(file.path);
+      if (!await launchUrl(uri)) {
+        // If it's a dummy text file, it might not "play" as video, 
+        // but launchUrl should open it in Notepad
+      }
     }
   }
 

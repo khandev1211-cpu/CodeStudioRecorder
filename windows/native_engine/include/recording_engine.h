@@ -26,6 +26,7 @@ public:
     void getStats(RecordingStats* stats);
     RecordingStatus getStatus() const;
     void setProcessorEnabled(int32_t index, bool enabled);
+    void handleMouseClick(float x, float y);
 
 private:
     std::unique_ptr<ICapturer> capturer_;

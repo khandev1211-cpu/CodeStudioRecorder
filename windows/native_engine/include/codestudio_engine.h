@@ -32,3 +32,4 @@ CSE_API void cse_set_setting_int(const char* key, int32_t value);
 CSE_API int32_t cse_get_setting_int(const char* key, int32_t default_value);
 
 CSE_API void cse_set_processor_enabled(int32_t index, bool enabled);
+CSE_API void cse_report_mouse_click(float x, float y);

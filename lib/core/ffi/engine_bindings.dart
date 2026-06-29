@@ -34,6 +34,9 @@ typedef GetSettingIntDart = int Function(Pointer<Utf8>, int);
 typedef SetProcessorEnabledNative = Void Function(Int32, Bool);
 typedef SetProcessorEnabledDart = void Function(int, bool);
 
+typedef ReportMouseClickNative = Void Function(Float, Float);
+typedef ReportMouseClickDart = void Function(double, double);
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -50,6 +53,7 @@ class EngineBindings {
   late final SetSettingIntDart setSettingInt;
   late final GetSettingIntDart getSettingInt;
   late final SetProcessorEnabledDart setProcessorEnabled;
+  late final ReportMouseClickDart reportMouseClick;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -99,6 +103,9 @@ class EngineBindings {
         .asFunction();
     setProcessorEnabled = _lib
         .lookup<NativeFunction<SetProcessorEnabledNative>>('cse_set_processor_enabled')
+        .asFunction();
+    reportMouseClick = _lib
+        .lookup<NativeFunction<ReportMouseClickNative>>('cse_report_mouse_click')
         .asFunction();
   }
 }

@@ -1,36 +1,37 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:codestudio_recorder/core/ffi/types/native_types.dart';
 import 'package:codestudio_recorder/core/services/recording_service.dart';
+import 'package:codestudio_recorder/core/models/recording_stats.dart';
+import 'package:codestudio_recorder/core/ffi/types/native_types.dart';
 import 'package:codestudio_recorder/core/services/history_service.dart';
 import 'package:codestudio_recorder/core/models/recording.dart';
-import 'package:codestudio_recorder/core/models/recording_stats.dart';
-import 'dart:async';
-import 'package:intl/intl.dart';
 
 class RecordingState {
   final RecordingStatus status;
   final Duration elapsedTime;
-  final int droppedFrames;
-  final double encoderLoad;
+  final RecordingStats? stats;
+  final String? lastError;
 
   RecordingState({
-    required this.status,
+    this.status = RecordingStatus.idle,
     this.elapsedTime = Duration.zero,
-    this.droppedFrames = 0,
-    this.encoderLoad = 0.0,
+    this.stats,
+    this.lastError,
   });
 
   RecordingState copyWith({
     RecordingStatus? status,
     Duration? elapsedTime,
-    int? droppedFrames,
-    double? encoderLoad,
+    RecordingStats? stats,
+    String? lastError,
   }) {
     return RecordingState(
       status: status ?? this.status,
       elapsedTime: elapsedTime ?? this.elapsedTime,
-      droppedFrames: droppedFrames ?? this.droppedFrames,
-      encoderLoad: encoderLoad ?? this.encoderLoad,
+      stats: stats ?? this.stats,
+      lastError: lastError ?? this.lastError,
     );
   }
 }
@@ -41,67 +42,104 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
   Timer? _statsTimer;
   String? _lastOutputPath;
 
-  RecordingNotifier(this._service, this._historyService) : super(RecordingState(status: RecordingStatus.idle));
+  RecordingNotifier(this._service, this._historyService) : super(RecordingState());
 
-  Future<void> start(int width, int height, int fps, String outputPath, int targetHwnd) async {
+  Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd) async {
+    print("RecordingNotifier: Attempting to start recording...");
+    state = state.copyWith(lastError: null);
+    
+    if (!_service.isInitialized) {
+      print("RecordingNotifier: Service not initialized!");
+      state = state.copyWith(lastError: "Native Engine failed to initialize.");
+      return;
+    }
+
+    String outputPath = customPath ?? "";
+    if (outputPath.isEmpty) {
+      final userProfile = Platform.environment['USERPROFILE'] ?? '.';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      
+      // Try to create a dedicated folder to avoid some security blocks
+      final appVideosDir = Directory(p.join(userProfile, 'Videos', 'CodeStudio'));
+      if (!appVideosDir.existsSync()) {
+        try {
+          appVideosDir.createSync(recursive: true);
+        } catch (e) {
+          print("Failed to create Videos/CodeStudio folder, falling back to local: $e");
+        }
+      }
+      
+      if (appVideosDir.existsSync()) {
+        outputPath = p.join(appVideosDir.path, 'Rec_${timestamp}.mp4');
+      } else {
+        outputPath = p.join(userProfile, 'CodeStudio_Rec_${timestamp}.mp4');
+      }
+    }
+
+    print("RecordingNotifier: Calling service.start with ${width}x${height}, $fps fps, path: $outputPath, hwnd: $targetHwnd");
     final result = _service.start(width, height, fps, outputPath, targetHwnd);
+    print("RecordingNotifier: service.start returned: $result");
+    
     if (result == 0) {
       _lastOutputPath = outputPath;
       state = state.copyWith(status: RecordingStatus.recording);
       _startStatsPolling();
+    } else {
+      state = state.copyWith(
+        status: RecordingStatus.error,
+        lastError: "Engine failed to start. Error code: $result",
+      );
     }
   }
 
   Future<void> stop() async {
-    final stats = _service.getStats();
-    final duration = Duration(milliseconds: stats.elapsedMs);
-    
     final result = _service.stop();
+    _statsTimer?.cancel();
+    
     if (result == 0) {
       if (_lastOutputPath != null) {
-        await _historyService.saveRecording(Recording(
+        _historyService.saveRecording(Recording(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: "Recording ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}",
+          title: p.basename(_lastOutputPath!),
           filePath: _lastOutputPath!,
+          duration: state.elapsedTime,
           createdAt: DateTime.now(),
-          duration: duration,
           fileSize: 0,
         ));
       }
-      
       state = state.copyWith(status: RecordingStatus.completed);
-      _stopStatsPolling();
+    } else {
+      state = state.copyWith(status: RecordingStatus.error, lastError: "Failed to stop properly.");
     }
   }
 
   void _startStatsPolling() {
     _statsTimer?.cancel();
-    _statsTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+    _statsTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       final stats = _service.getStats();
-      state = state.copyWith(
-        status: _service.status,
-        elapsedTime: Duration(milliseconds: stats.elapsedMs),
-        droppedFrames: stats.droppedFrames,
-        encoderLoad: stats.encoderLoad,
-      );
-    });
-  }
+      final status = _service.status;
 
-  void _stopStatsPolling() {
-    _statsTimer?.cancel();
-    _statsTimer = null;
+      state = state.copyWith(
+        stats: stats,
+        status: status,
+        elapsedTime: Duration(milliseconds: stats.elapsedMs),
+      );
+
+      if (status == RecordingStatus.completed || status == RecordingStatus.error) {
+        timer.cancel();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _stopStatsPolling();
+    _statsTimer?.cancel();
     super.dispose();
   }
 }
 
 final recordingStateProvider = StateNotifierProvider<RecordingNotifier, RecordingState>((ref) {
-  return RecordingNotifier(
-    ref.watch(recordingServiceProvider),
-    ref.watch(historyServiceProvider),
-  );
+  final service = ref.read(recordingServiceProvider);
+  final history = ref.read(historyServiceProvider);
+  return RecordingNotifier(service, history);
 });

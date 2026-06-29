@@ -20,11 +20,7 @@ public:
     void resume() override;
 
     ID3D11Device* getDevice() override { return d3d_device_.Get(); }
-    ID3D11DeviceContext* getContext() override {
-        Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
-        d3d_device_->GetImmediateContext(&context);
-        return context.Get();
-    }
+    ID3D11DeviceContext* getContext() override { return d3d_context_.Get(); }
 
 private:
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem item_{ nullptr };
@@ -32,6 +28,7 @@ private:
     winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool frame_pool_{ nullptr };
 
     Microsoft::WRL::ComPtr<ID3D11Device> d3d_device_;
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext> d3d_context_;
     winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice device_{ nullptr };
 
     void onFrameArrived(winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool const& sender, winrt::Windows::Foundation::IInspectable const& args);
