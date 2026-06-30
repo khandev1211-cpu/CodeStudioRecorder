@@ -14,6 +14,7 @@
 #include "recording_engine.h"
 #include "window_utils.h"
 #include "audio_utils.h"
+#include "webcam_utils.h"
 #include "settings_manager.h"
 #include "encoder_factory.h"
 #include "cs_logger.h"
@@ -174,6 +175,20 @@ CSE_API void cse_enumerate_audio_devices(bool capture, AudioDeviceCallback callb
         nadi.name = name.c_str();
         nadi.is_default = dev.is_default;
         callback(&nadi);
+    }
+}
+
+CSE_API void cse_enumerate_webcams(WebcamCallback callback) {
+    auto cameras = cs::WebcamUtils::enumerateCameras();
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+
+    for (const auto& cam : cameras) {
+        std::string id = converter.to_bytes(cam.id);
+        std::string name = converter.to_bytes(cam.name);
+        NativeWebcamDeviceInfo nwdi;
+        nwdi.id = id.c_str();
+        nwdi.name = name.c_str();
+        callback(&nwdi);
     }
 }
 

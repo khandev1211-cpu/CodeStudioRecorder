@@ -17,6 +17,7 @@ class _ProfileDetailsScreenState extends ConsumerState<ProfileDetailsScreen> {
   late RecordingProfile _profile;
   List<({String id, String name, bool isDefault})> _mics = [];
   List<({String id, String name, bool isDefault})> _speakers = [];
+  List<({String id, String name})> _webcams = [];
 
   @override
   void initState() {
@@ -31,6 +32,7 @@ class _ProfileDetailsScreenState extends ConsumerState<ProfileDetailsScreen> {
     setState(() {
       _mics = service.getAudioDevices(true);
       _speakers = service.getAudioDevices(false);
+      _webcams = service.getWebcams();
     });
   }
 
@@ -117,6 +119,16 @@ class _ProfileDetailsScreenState extends ConsumerState<ProfileDetailsScreen> {
             ],
             onChanged: (v) => setState(() => _profile = _profile.copyWith(sysAudioDeviceId: v)),
           ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String?>(
+            decoration: const InputDecoration(labelText: "Webcam Device"),
+            value: _profile.webcamDeviceId,
+            items: [
+              const DropdownMenuItem(value: null, child: Text("None")),
+              ..._webcams.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name, overflow: TextOverflow.ellipsis))),
+            ],
+            onChanged: (v) => setState(() => _profile = _profile.copyWith(webcamDeviceId: v)),
+          ),
           const Divider(height: 40),
           const Text("Effects (Default State)", style: TextStyle(fontWeight: FontWeight.bold)),
           SwitchListTile(
@@ -148,6 +160,7 @@ extension on RecordingProfile {
     String? encoder,
     String? micDeviceId,
     String? sysAudioDeviceId,
+    String? webcamDeviceId,
     bool? cursorHighlight,
     bool? clickAnimations,
     bool? smartZoom,
@@ -161,6 +174,7 @@ extension on RecordingProfile {
       encoder: encoder ?? this.encoder,
       micDeviceId: micDeviceId ?? this.micDeviceId,
       sysAudioDeviceId: sysAudioDeviceId ?? this.sysAudioDeviceId,
+      webcamDeviceId: webcamDeviceId ?? this.webcamDeviceId,
       cursorHighlight: cursorHighlight ?? this.cursorHighlight,
       clickAnimations: clickAnimations ?? this.clickAnimations,
       smartZoom: smartZoom ?? this.smartZoom,

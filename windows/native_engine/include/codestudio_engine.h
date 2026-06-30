@@ -19,6 +19,11 @@ struct NativeAudioDeviceInfo {
     bool is_default;
 };
 
+struct NativeWebcamDeviceInfo {
+    const char* id;
+    const char* name;
+};
+
 // Forward declaration of cs::RecordingConfig to avoid including heavy headers here
 namespace cs { struct RecordingConfig; struct RecordingStats; }
 
@@ -35,6 +40,9 @@ CSE_API void cse_enumerate_windows(WindowCallback callback);
 
 typedef void (*AudioDeviceCallback)(NativeAudioDeviceInfo*);
 CSE_API void cse_enumerate_audio_devices(bool capture, AudioDeviceCallback callback);
+
+typedef void (*WebcamCallback)(NativeWebcamDeviceInfo*);
+CSE_API void cse_enumerate_webcams(WebcamCallback callback);
 
 CSE_API void cse_set_setting_string(const char* key, const char* value);
 CSE_API const char* cse_get_setting_string(const char* key, const char* default_value);

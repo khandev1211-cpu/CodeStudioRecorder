@@ -52,7 +52,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
 
   RecordingNotifier(this._service, this._historyService) : super(RecordingState());
 
-  Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd, String encoder, {String? micId, String? sysId}) async {
+  Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd, String encoder, {String? micId, String? sysId, String? webcamId}) async {
     print("RecordingNotifier: Attempting to start recording...");
     state = state.copyWith(lastError: null);
     
@@ -63,6 +63,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
     }
 
     String outputPath = customPath ?? "";
+    // ...
     // ... (logic for output path stays the same)
     // ...
     if (outputPath.isEmpty) {
@@ -103,7 +104,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
     print("RecordingNotifier: Calling service.start with ${width}x${height}, $fps fps, path: $outputPath, hwnd: $targetHwnd, encoder: $encoder");
     final result = _service.start(
       width, height, fps, outputPath, targetHwnd, encoder,
-      micId: micId, sysId: sysId,
+      micId: micId, sysId: sysId, webcamId: webcamId,
     );
     print("RecordingNotifier: service.start returned: $result");
     

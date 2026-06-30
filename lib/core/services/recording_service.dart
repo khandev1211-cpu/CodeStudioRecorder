@@ -9,6 +9,7 @@ final recordingServiceProvider = Provider((ref) => RecordingService());
 
 final List<({int hwnd, String title})> _tempWindowsList = [];
 final List<({String id, String name, bool isDefault})> _tempAudioList = [];
+final List<({String id, String name})> _tempWebcamList = [];
 
 void _onWindowEnumerated(Pointer<NativeWindowInfo> info) {
   final hwnd = info.ref.hwnd;
@@ -21,6 +22,12 @@ void _onAudioDeviceEnumerated(Pointer<NativeAudioDeviceInfo> info) {
   final id = info.ref.id.cast<Utf8>().toDartString();
   final name = info.ref.name.cast<Utf8>().toDartString();
   _tempAudioList.add((id: id, name: name, isDefault: info.ref.isDefault));
+}
+
+void _onWebcamEnumerated(Pointer<NativeWebcamDeviceInfo> info) {
+  final id = info.ref.id.cast<Utf8>().toDartString();
+  final name = info.ref.name.cast<Utf8>().toDartString();
+  _tempWebcamList.add((id: id, name: name));
 }
 
 class RecordingService {
@@ -38,7 +45,7 @@ class RecordingService {
 
   bool get isInitialized => _isInitialized;
 
-  int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder, {String? micId, String? sysId}) {
+  int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder, {String? micId, String? sysId, String? webcamId}) {
     if (!_isInitialized) return -999;
 
     final configPtr = calloc<NativeRecordingConfig>();
@@ -46,6 +53,7 @@ class RecordingService {
     final encoderPtr = encoder.toNativeUtf8();
     final micIdPtr = (micId ?? "").toNativeUtf8();
     final sysIdPtr = (sysId ?? "").toNativeUtf8();
+    final webcamIdPtr = (webcamId ?? "").toNativeUtf8();
     
     try {
       configPtr.ref.width = width;
@@ -58,6 +66,7 @@ class RecordingService {
       configPtr.ref.encoderName = encoderPtr;
       configPtr.ref.micDeviceId = micIdPtr;
       configPtr.ref.sysAudioDeviceId = sysIdPtr;
+      configPtr.ref.webcamDeviceId = webcamIdPtr;
 
       return _bindings.startRecording(configPtr);
     } finally {
@@ -116,6 +125,14 @@ class RecordingService {
     final nativeCallback = Pointer.fromFunction<AudioDeviceCallbackNative>(_onAudioDeviceEnumerated);
     _bindings.enumerateAudioDevices(capture, nativeCallback);
     return List.from(_tempAudioList);
+  }
+
+  List<({String id, String name})> getWebcams() {
+    if (!_isInitialized) return [];
+    _tempWebcamList.clear();
+    final nativeCallback = Pointer.fromFunction<WebcamCallbackNative>(_onWebcamEnumerated);
+    _bindings.enumerateWebcams(nativeCallback);
+    return List.from(_tempWebcamList);
   }
 
   void setSettingString(String key, String value) {

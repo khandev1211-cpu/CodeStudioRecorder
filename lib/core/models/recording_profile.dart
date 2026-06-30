@@ -13,6 +13,7 @@ class RecordingProfile {
   final String encoder; // e.g. "auto", "h264_nvenc", "libx264"
   final String? micDeviceId;
   final String? sysAudioDeviceId;
+  final String? webcamDeviceId;
 
   RecordingProfile({
     required this.id,
@@ -29,6 +30,7 @@ class RecordingProfile {
     this.encoder = "auto",
     this.micDeviceId,
     this.sysAudioDeviceId,
+    this.webcamDeviceId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -46,6 +48,7 @@ class RecordingProfile {
     'encoder': encoder,
     'micDeviceId': micDeviceId,
     'sysAudioDeviceId': sysAudioDeviceId,
+    'webcamDeviceId': webcamDeviceId,
   };
 
   factory RecordingProfile.fromJson(Map<String, dynamic> json) => RecordingProfile(
@@ -63,6 +66,7 @@ class RecordingProfile {
     encoder: json['encoder'] ?? "auto",
     micDeviceId: json['micDeviceId'],
     sysAudioDeviceId: json['sysAudioDeviceId'],
+    webcamDeviceId: json['webcamDeviceId'],
   );
 
   static RecordingProfile defaultProfile() => RecordingProfile(

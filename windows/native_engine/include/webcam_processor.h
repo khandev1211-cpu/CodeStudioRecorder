@@ -11,6 +11,11 @@ public:
     WebcamProcessor();
     ~WebcamProcessor();
 
+    void onStart(const RecordingConfig& config) override {
+        std::lock_guard<std::mutex> lock(mutex_);
+        config_ = config;
+    }
+
     void process(VideoFrame& frame, ID3D11Device* device, ID3D11DeviceContext* context) override;
 
     bool isEnabled() const override { return enabled_; }
@@ -27,6 +32,7 @@ private:
     void stopCamera();
 
     bool enabled_ = false;
+    RecordingConfig config_{};
     D2D1_RECT_F rect_ = D2D1::RectF(20, 20, 340, 200); // Default PiP position
     std::mutex mutex_;
 
@@ -36,6 +42,10 @@ private:
 
     // Placeholder for real camera texture
     Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> webcam_placeholder_brush_;
+
+    Microsoft::WRL::ComPtr<IMFSourceReader> source_reader_;
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> webcam_texture_;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap1> webcam_bitmap_;
 };
 
 } // namespace cs

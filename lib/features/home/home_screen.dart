@@ -252,6 +252,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 selectedProfile.encoder,
                                 micId: selectedProfile.micDeviceId,
                                 sysId: selectedProfile.sysAudioDeviceId,
+                                webcamId: selectedProfile.webcamDeviceId,
                               );
                             },
                             icon: const Icon(Icons.fiber_manual_record),

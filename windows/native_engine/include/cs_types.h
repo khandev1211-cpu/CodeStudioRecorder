@@ -26,6 +26,7 @@ struct RecordingConfig {
     const char* encoder_name; // e.g. "h264_nvenc", "libx264"
     const char* mic_device_id;
     const char* sys_audio_device_id;
+    const char* webcam_device_id;
 };
 
 struct RecordingStats {
