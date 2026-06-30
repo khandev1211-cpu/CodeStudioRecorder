@@ -9,6 +9,8 @@ import 'package:codestudio_recorder/shared/theme/app_logo.dart';
 import 'package:codestudio_recorder/features/recording/annotation_toolbar.dart';
 import 'package:codestudio_recorder/features/recording/annotation_state.dart';
 
+import 'package:codestudio_recorder/shared/widgets/volume_meter.dart';
+
 import 'package:codestudio_recorder/core/models/recording_profile.dart';
 import 'package:codestudio_recorder/core/services/profile_service.dart';
 
@@ -139,6 +141,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         'Recording ${selectedWindow?.title ?? "Full Screen"}',
                         style: const TextStyle(color: Colors.redAccent),
                       ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: 250,
+                        child: Column(
+                          children: [
+                            VolumeMeter(
+                              level: recordingState.micLevel,
+                              label: "MICROPHONE",
+                              color: Colors.blueAccent,
+                            ),
+                            const SizedBox(height: 12),
+                            VolumeMeter(
+                              level: recordingState.systemLevel,
+                              label: "SYSTEM AUDIO",
+                            ),
+                          ],
+                        ),
+                      ),
                     ] else ...[
                       const SizedBox(height: 20),
                       const Text("Recording Profile:"),
@@ -229,7 +249,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 selectedProfile.fps, 
                                 null, 
                                 hwnd,
-                                selectedProfile.encoder
+                                selectedProfile.encoder,
+                                micId: selectedProfile.micDeviceId,
+                                sysId: selectedProfile.sysAudioDeviceId,
                               );
                             },
                             icon: const Icon(Icons.fiber_manual_record),

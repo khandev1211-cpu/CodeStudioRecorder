@@ -15,8 +15,12 @@ The project is currently in **Phase 2: Professional Creator Tools**. We have suc
 
 - [x] **Real-time Cursor Highlighting** (Direct2D)
 - [x] **Expanding Click Animations** (Direct2D)
+- [x] **Global Mouse Hook** (System-wide clicks)
+- [x] **Audio Visualization** (Real-time peak meters)
 - [x] **Automated Cloud Builds** (GitHub Actions)
-- [ ] **Smart Zoom** (In progress)
+- [x] **Hardware-specific Encoding** (NVENC, AMF, QSV)
+- [x] **Advanced Profile Management** (Device selection)
+- [ ] **Smart Zoom** (In progress - smoothing implemented)
 
 ---
 

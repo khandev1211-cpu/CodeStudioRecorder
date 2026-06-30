@@ -28,6 +28,7 @@ class ProfilesScreen extends ConsumerWidget {
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
+              onTap: () => context.go('/profiles/${profile.id}'),
               leading: const Icon(Icons.description, color: Color(0xFFFF3B3B)),
               title: Text(profile.name),
               subtitle: Text(

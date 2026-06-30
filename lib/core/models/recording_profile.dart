@@ -11,6 +11,8 @@ class RecordingProfile {
   final bool smartZoom;
   final double zoomLevel;
   final String encoder; // e.g. "auto", "h264_nvenc", "libx264"
+  final String? micDeviceId;
+  final String? sysAudioDeviceId;
 
   RecordingProfile({
     required this.id,
@@ -25,6 +27,8 @@ class RecordingProfile {
     this.smartZoom = false,
     this.zoomLevel = 1.5,
     this.encoder = "auto",
+    this.micDeviceId,
+    this.sysAudioDeviceId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -40,6 +44,8 @@ class RecordingProfile {
     'smartZoom': smartZoom,
     'zoomLevel': zoomLevel,
     'encoder': encoder,
+    'micDeviceId': micDeviceId,
+    'sysAudioDeviceId': sysAudioDeviceId,
   };
 
   factory RecordingProfile.fromJson(Map<String, dynamic> json) => RecordingProfile(
@@ -55,6 +61,8 @@ class RecordingProfile {
     smartZoom: json['smartZoom'] ?? false,
     zoomLevel: (json['zoomLevel'] ?? 1.5).toDouble(),
     encoder: json['encoder'] ?? "auto",
+    micDeviceId: json['micDeviceId'],
+    sysAudioDeviceId: json['sysAudioDeviceId'],
   );
 
   static RecordingProfile defaultProfile() => RecordingProfile(

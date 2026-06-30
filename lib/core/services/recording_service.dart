@@ -8,12 +8,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final recordingServiceProvider = Provider((ref) => RecordingService());
 
 final List<({int hwnd, String title})> _tempWindowsList = [];
+final List<({String id, String name, bool isDefault})> _tempAudioList = [];
 
 void _onWindowEnumerated(Pointer<NativeWindowInfo> info) {
   final hwnd = info.ref.hwnd;
   final titlePtr = info.ref.title.cast<Utf8>();
   final String title = titlePtr.toDartString();
   _tempWindowsList.add((hwnd: hwnd, title: title));
+}
+
+void _onAudioDeviceEnumerated(Pointer<NativeAudioDeviceInfo> info) {
+  final id = info.ref.id.cast<Utf8>().toDartString();
+  final name = info.ref.name.cast<Utf8>().toDartString();
+  _tempAudioList.add((id: id, name: name, isDefault: info.ref.isDefault));
 }
 
 class RecordingService {
@@ -31,12 +38,14 @@ class RecordingService {
 
   bool get isInitialized => _isInitialized;
 
-  int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder) {
+  int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder, {String? micId, String? sysId}) {
     if (!_isInitialized) return -999;
 
     final configPtr = calloc<NativeRecordingConfig>();
     final pathPtr = outputPath.toNativeUtf8();
     final encoderPtr = encoder.toNativeUtf8();
+    final micIdPtr = (micId ?? "").toNativeUtf8();
+    final sysIdPtr = (sysId ?? "").toNativeUtf8();
     
     try {
       configPtr.ref.width = width;
@@ -47,6 +56,8 @@ class RecordingService {
       configPtr.ref.captureAudio = true;
       configPtr.ref.targetHwnd = targetHwnd;
       configPtr.ref.encoderName = encoderPtr;
+      configPtr.ref.micDeviceId = micIdPtr;
+      configPtr.ref.sysAudioDeviceId = sysIdPtr;
 
       return _bindings.startRecording(configPtr);
     } finally {
@@ -97,6 +108,14 @@ class RecordingService {
     final nativeCallback = Pointer.fromFunction<WindowCallbackNative>(_onWindowEnumerated);
     _bindings.enumerateWindows(nativeCallback);
     return List.from(_tempWindowsList);
+  }
+
+  List<({String id, String name, bool isDefault})> getAudioDevices(bool capture) {
+    if (!_isInitialized) return [];
+    _tempAudioList.clear();
+    final nativeCallback = Pointer.fromFunction<AudioDeviceCallbackNative>(_onAudioDeviceEnumerated);
+    _bindings.enumerateAudioDevices(capture, nativeCallback);
+    return List.from(_tempAudioList);
   }
 
   void setSettingString(String key, String value) {

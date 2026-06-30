@@ -13,6 +13,12 @@ struct NativeWindowInfo {
     const char* title;
 };
 
+struct NativeAudioDeviceInfo {
+    const char* id;
+    const char* name;
+    bool is_default;
+};
+
 // Forward declaration of cs::RecordingConfig to avoid including heavy headers here
 namespace cs { struct RecordingConfig; struct RecordingStats; }
 
@@ -21,10 +27,14 @@ CSE_API int32_t cse_stop_recording();
 CSE_API int32_t cse_pause_recording();
 CSE_API int32_t cse_resume_recording();
 CSE_API void cse_get_stats(cs::RecordingStats* stats);
+CSE_API void cse_get_audio_levels(float* mic, float* system);
 CSE_API int32_t cse_get_status();
 
 typedef void (*WindowCallback)(NativeWindowInfo*);
 CSE_API void cse_enumerate_windows(WindowCallback callback);
+
+typedef void (*AudioDeviceCallback)(NativeAudioDeviceInfo*);
+CSE_API void cse_enumerate_audio_devices(bool capture, AudioDeviceCallback callback);
 
 CSE_API void cse_set_setting_string(const char* key, const char* value);
 CSE_API const char* cse_get_setting_string(const char* key, const char* default_value);

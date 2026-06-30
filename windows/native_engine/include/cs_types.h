@@ -24,6 +24,8 @@ struct RecordingConfig {
     bool capture_audio;
     int64_t target_hwnd; // 0 for full screen
     const char* encoder_name; // e.g. "h264_nvenc", "libx264"
+    const char* mic_device_id;
+    const char* sys_audio_device_id;
 };
 
 struct RecordingStats {
@@ -35,6 +37,12 @@ struct RecordingStats {
 struct ChapterMarker {
     int64_t timestamp_ms;
     const char* label;
+};
+
+struct AudioDeviceInfo {
+    const char* id;
+    const char* name;
+    bool is_default;
 };
 
 } // namespace cs

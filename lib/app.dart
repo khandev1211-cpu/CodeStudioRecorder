@@ -4,6 +4,7 @@ import 'package:codestudio_recorder/features/home/home_screen.dart';
 import 'package:codestudio_recorder/features/history/history_screen.dart';
 import 'package:codestudio_recorder/features/settings/settings_screen.dart';
 import 'package:codestudio_recorder/features/profiles/profiles_screen.dart';
+import 'package:codestudio_recorder/features/profiles/profile_details_screen.dart';
 
 final _router = GoRouter(
   initialLocation: '/',
@@ -23,6 +24,12 @@ final _router = GoRouter(
     GoRoute(
       path: '/profiles',
       builder: (context, state) => const ProfilesScreen(),
+      routes: [
+        GoRoute(
+          path: ':id',
+          builder: (context, state) => ProfileDetailsScreen(profileId: state.pathParameters['id']!),
+        ),
+      ],
     ),
   ],
 );

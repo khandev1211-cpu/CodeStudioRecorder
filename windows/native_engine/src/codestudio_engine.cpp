@@ -13,6 +13,7 @@
 #include "codestudio_engine.h"
 #include "recording_engine.h"
 #include "window_utils.h"
+#include "audio_utils.h"
 #include "settings_manager.h"
 #include "encoder_factory.h"
 #include "cs_logger.h"
@@ -158,6 +159,21 @@ CSE_API void cse_enumerate_windows(WindowCallback callback) {
         nwi.hwnd = reinterpret_cast<int64_t>(win.hwnd);
         nwi.title = title.c_str();
         callback(&nwi);
+    }
+}
+
+CSE_API void cse_enumerate_audio_devices(bool capture, AudioDeviceCallback callback) {
+    auto devices = cs::AudioUtils::enumerateDevices(capture);
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+
+    for (const auto& dev : devices) {
+        std::string id = converter.to_bytes(dev.id);
+        std::string name = converter.to_bytes(dev.name);
+        NativeAudioDeviceInfo nadi;
+        nadi.id = id.c_str();
+        nadi.name = name.c_str();
+        nadi.is_default = dev.is_default;
+        callback(&nadi);
     }
 }
 

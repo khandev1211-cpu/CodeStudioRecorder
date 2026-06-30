@@ -37,6 +37,7 @@ add_library(codestudio_engine SHARED
     src/webcam_processor.cpp
     src/db_manager.cpp
     src/global_mouse_hook.cpp
+    src/audio_utils.cpp
 )
 
 if(WIN32)

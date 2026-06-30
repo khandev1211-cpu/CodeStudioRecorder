@@ -25,10 +25,18 @@ bool WASAPIAudioEngine::initialize(const RecordingConfig& config) {
     if (FAILED(hr)) return false;
 
     Microsoft::WRL::ComPtr<IMMDevice> device;
-    if (mode_ == DeviceMode::Loopback) {
-        hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
+    const char* target_id = (mode_ == DeviceMode::Loopback) ? config.sys_audio_device_id : config.mic_device_id;
+
+    if (target_id && strlen(target_id) > 0) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+        std::wstring wid = converter.from_bytes(target_id);
+        hr = enumerator->GetDevice(wid.c_str(), &device);
     } else {
-        hr = enumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &device);
+        if (mode_ == DeviceMode::Loopback) {
+            hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
+        } else {
+            hr = enumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &device);
+        }
     }
     if (FAILED(hr)) return false;
 

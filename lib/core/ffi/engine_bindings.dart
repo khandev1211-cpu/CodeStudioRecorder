@@ -22,6 +22,10 @@ typedef WindowCallbackNative = Void Function(Pointer<NativeWindowInfo>);
 typedef EnumerateWindowsNative = Void Function(Pointer<NativeFunction<WindowCallbackNative>>);
 typedef EnumerateWindowsDart = void Function(Pointer<NativeFunction<WindowCallbackNative>>);
 
+typedef AudioDeviceCallbackNative = Void Function(Pointer<NativeAudioDeviceInfo>);
+typedef EnumerateAudioDevicesNative = Void Function(Bool, Pointer<NativeFunction<AudioDeviceCallbackNative>>);
+typedef EnumerateAudioDevicesDart = void Function(bool, Pointer<NativeFunction<AudioDeviceCallbackNative>>);
+
 typedef SetSettingStringNative = Void Function(Pointer<Utf8>, Pointer<Utf8>);
 typedef SetSettingStringDart = void Function(Pointer<Utf8>, Pointer<Utf8>);
 
@@ -72,6 +76,7 @@ class EngineBindings {
   late final GetAudioLevelsDart getAudioLevels;
   late final GetStatusDart getStatus;
   late final EnumerateWindowsDart enumerateWindows;
+  late final EnumerateAudioDevicesDart enumerateAudioDevices;
   
   late final SetSettingStringDart setSettingString;
   late final GetSettingStringDart getSettingString;
@@ -123,6 +128,9 @@ class EngineBindings {
         .asFunction();
     enumerateWindows = _lib
         .lookup<NativeFunction<EnumerateWindowsNative>>('cse_enumerate_windows')
+        .asFunction();
+    enumerateAudioDevices = _lib
+        .lookup<NativeFunction<EnumerateAudioDevicesNative>>('cse_enumerate_audio_devices')
         .asFunction();
     setSettingString = _lib
         .lookup<NativeFunction<SetSettingStringNative>>('cse_set_setting_string')

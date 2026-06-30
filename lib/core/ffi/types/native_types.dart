@@ -30,6 +30,8 @@ final class NativeRecordingConfig extends Struct {
   @Int64()
   external int targetHwnd;
   external Pointer<Utf8> encoderName;
+  external Pointer<Utf8> micDeviceId;
+  external Pointer<Utf8> sysAudioDeviceId;
 }
 
 final class NativeRecordingStats extends Struct {
@@ -45,4 +47,11 @@ final class NativeWindowInfo extends Struct {
   @Int64()
   external int hwnd;
   external Pointer<Utf8> title;
+}
+
+final class NativeAudioDeviceInfo extends Struct {
+  external Pointer<Utf8> id;
+  external Pointer<Utf8> name;
+  @Bool()
+  external bool isDefault;
 }
