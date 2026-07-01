@@ -39,9 +39,9 @@ jobs:
           }
 
       - name: Build Installer (Inno Setup)
-        uses: scottmelhop/iscc-action@v1
-        with:
-          filepath: installer.iss
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
