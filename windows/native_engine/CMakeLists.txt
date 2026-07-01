@@ -40,6 +40,8 @@ add_library(codestudio_engine SHARED
     src/audio_utils.cpp
     src/webcam_utils.cpp
     src/plugin_manager.cpp
+    src/ai_processor.cpp
+    src/caption_engine.cpp
 )
 
 if(WIN32)

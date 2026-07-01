@@ -33,6 +33,7 @@ CSE_API int32_t cse_pause_recording();
 CSE_API int32_t cse_resume_recording();
 CSE_API void cse_get_stats(cs::RecordingStats* stats);
 CSE_API void cse_get_audio_levels(float* mic, float* system);
+CSE_API const char* cse_get_next_caption();
 CSE_API int32_t cse_get_status();
 
 typedef void (*WindowCallback)(NativeWindowInfo*);

@@ -15,6 +15,7 @@ class RecordingState {
   final String? lastError;
   final double micLevel;
   final double systemLevel;
+  final String? currentCaption;
 
   RecordingState({
     this.status = RecordingStatus.idle,
@@ -23,6 +24,7 @@ class RecordingState {
     this.lastError,
     this.micLevel = 0.0,
     this.systemLevel = 0.0,
+    this.currentCaption,
   });
 
   RecordingState copyWith({
@@ -32,6 +34,7 @@ class RecordingState {
     String? lastError,
     double? micLevel,
     double? systemLevel,
+    String? currentCaption,
   }) {
     return RecordingState(
       status: status ?? this.status,
@@ -40,6 +43,7 @@ class RecordingState {
       lastError: lastError ?? this.lastError,
       micLevel: micLevel ?? this.micLevel,
       systemLevel: systemLevel ?? this.systemLevel,
+      currentCaption: currentCaption ?? this.currentCaption,
     );
   }
 }
@@ -52,7 +56,14 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
 
   RecordingNotifier(this._service, this._historyService) : super(RecordingState());
 
-  Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd, String encoder, {String? micId, String? sysId, String? webcamId}) async {
+  Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd, String encoder, {
+    String? micId, 
+    String? sysId, 
+    String? webcamId,
+    bool aiNoise = false,
+    bool aiCaptions = false,
+    bool aiSilence = false,
+  }) async {
     print("RecordingNotifier: Attempting to start recording...");
     state = state.copyWith(lastError: null);
     
@@ -63,6 +74,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
     }
 
     String outputPath = customPath ?? "";
+    // ...
     // ...
     // ... (logic for output path stays the same)
     // ...
@@ -105,6 +117,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
     final result = _service.start(
       width, height, fps, outputPath, targetHwnd, encoder,
       micId: micId, sysId: sysId, webcamId: webcamId,
+      aiNoise: aiNoise, aiCaptions: aiCaptions, aiSilence: aiSilence,
     );
     print("RecordingNotifier: service.start returned: $result");
     
@@ -147,6 +160,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
       final stats = _service.getStats();
       final status = _service.status;
       final levels = _service.getAudioLevels();
+      final caption = _service.getNextCaption();
 
       state = state.copyWith(
         stats: stats,
@@ -154,6 +168,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
         elapsedTime: Duration(milliseconds: stats.elapsedMs),
         micLevel: levels.mic,
         systemLevel: levels.system,
+        currentCaption: caption,
       );
 
       if (status == RecordingStatus.completed || status == RecordingStatus.error) {

@@ -38,6 +38,10 @@ RecordingEngine::RecordingEngine() {
     processors_.push_back(std::make_unique<ZoomProcessor>());             // 3
     processors_.push_back(std::make_unique<WebcamProcessor>());           // 4
 
+    noise_suppressor_ = std::make_unique<AINoiseSuppressor>();
+    silence_detector_ = std::make_unique<AISilenceDetector>();
+    caption_engine_ = std::make_unique<CaptionEngine>();
+
     // Load external plugins
     PluginManager::instance().loadPlugins("plugins");
 }
@@ -98,6 +102,9 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
     }
 
     status_ = RecordingStatus::Recording;
+
+    noise_suppressor_->setEnabled(config.ai_noise_removal);
+    caption_engine_->setEnabled(config.ai_auto_captions);
 
     // Start Global Mouse Hook to capture clicks anywhere on the screen
     GlobalMouseHook::instance().start([this](float x, float y) {
@@ -162,6 +169,13 @@ void RecordingEngine::getAudioLevels(float* mic_level, float* system_level) {
     if (mixer_) {
         mixer_->getLevels(mic_level, system_level);
     }
+}
+
+bool RecordingEngine::getNextCaption(CaptionSegment& caption) {
+    if (caption_engine_) {
+        return caption_engine_->getNextCaption(caption);
+    }
+    return false;
 }
 
 RecordingStatus RecordingEngine::getStatus() const {
@@ -278,7 +292,20 @@ void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
 
 void RecordingEngine::onMicBuffer(const AudioBuffer& buffer) {
     if (status_ == RecordingStatus::Recording) {
-        mixer_->pushMicBuffer(buffer);
+        AudioBuffer processed = buffer;
+
+        // AI: Noise Suppression
+        noise_suppressor_->process(processed);
+
+        // AI: Silence Detection
+        if (!silence_detector_->process(processed)) {
+            // Optional: Mark silence in metadata
+        }
+
+        // AI: Auto-Captions (Whisper)
+        caption_engine_->pushAudio(processed);
+
+        mixer_->pushMicBuffer(processed);
 
         std::vector<float> mixed;
         uint32_t channels, sample_rate;

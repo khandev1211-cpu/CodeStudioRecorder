@@ -164,6 +164,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                         ),
                       ),
+                      if (recordingState.currentCaption != null) ...[
+                        const SizedBox(height: 30),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            recordingState.currentCaption!,
+                            style: const TextStyle(
+                              color: Colors.yellowAccent,
+                              fontSize: 18,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ] else ...[
                       const SizedBox(height: 20),
                       const Text("Recording Profile:"),
@@ -258,6 +277,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 micId: selectedProfile.micDeviceId,
                                 sysId: selectedProfile.sysAudioDeviceId,
                                 webcamId: selectedProfile.webcamDeviceId,
+                                aiNoise: selectedProfile.aiNoiseRemoval,
+                                aiCaptions: selectedProfile.aiAutoCaptions,
+                                aiSilence: selectedProfile.aiSilenceDetection,
                               );
                             },
                             icon: const Icon(Icons.fiber_manual_record),

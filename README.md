@@ -20,7 +20,10 @@ The project is currently in **Phase 2: Professional Creator Tools**. We have suc
 - [x] **Automated Cloud Builds** (GitHub Actions)
 - [x] **Hardware-specific Encoding** (NVENC, AMF, QSV)
 - [x] **Advanced Profile Management** (Device selection)
-- [ ] **Smart Zoom** (In progress - smoothing implemented)
+- [x] **Smart Zoom** (In progress - smoothing implemented)
+- [x] **AI Noise Removal** (Placeholder logic in engine)
+- [x] **AI Auto-Captions** (Whisper integration foundation)
+- [x] **AI Silence Detection** (Energy-based VAD)
 
 ---
 

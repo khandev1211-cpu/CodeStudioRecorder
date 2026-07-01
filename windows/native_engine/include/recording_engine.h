@@ -5,6 +5,8 @@
 #include "i_encoder.h"
 #include "audio_mixer.h"
 #include "i_frame_processor.h"
+#include "ai_processor.h"
+#include "caption_engine.h"
 #include <memory>
 #include <atomic>
 #include <mutex>
@@ -25,6 +27,7 @@ public:
 
     void getStats(RecordingStats* stats);
     void getAudioLevels(float* mic_level, float* system_level);
+    bool getNextCaption(CaptionSegment& caption);
     RecordingStatus getStatus() const;
     void setProcessorEnabled(int32_t index, bool enabled);
     void setPluginEnabled(int32_t index, bool enabled);
@@ -45,6 +48,10 @@ private:
     std::unique_ptr<IEncoder> encoder_;
     std::unique_ptr<AudioMixer> mixer_;
     std::vector<std::unique_ptr<IFrameProcessor>> processors_;
+
+    std::unique_ptr<AINoiseSuppressor> noise_suppressor_;
+    std::unique_ptr<AISilenceDetector> silence_detector_;
+    std::unique_ptr<CaptionEngine> caption_engine_;
 
     struct MarkerInternal {
         int64_t timestamp_ms;

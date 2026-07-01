@@ -146,6 +146,26 @@ class _ProfileDetailsScreenState extends ConsumerState<ProfileDetailsScreen> {
             value: _profile.smartZoom,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(smartZoom: v)),
           ),
+          const Divider(height: 40),
+          const Text("AI Features (Phase 4)", style: TextStyle(fontWeight: FontWeight.bold)),
+          SwitchListTile(
+            title: const Text("AI Background Noise Removal"),
+            subtitle: const Text("Uses DeepFilterNet to clean microphone audio"),
+            value: _profile.aiNoiseRemoval,
+            onChanged: (v) => setState(() => _profile = _profile.copyWith(aiNoiseRemoval: v)),
+          ),
+          SwitchListTile(
+            title: const Text("AI Auto-Captions (Local Whisper)"),
+            subtitle: const Text("Generate real-time captions locally"),
+            value: _profile.aiAutoCaptions,
+            onChanged: (v) => setState(() => _profile = _profile.copyWith(aiAutoCaptions: v)),
+          ),
+          SwitchListTile(
+            title: const Text("AI Silence Detection"),
+            subtitle: const Text("Automatically mark silent segments in history"),
+            value: _profile.aiSilenceDetection,
+            onChanged: (v) => setState(() => _profile = _profile.copyWith(aiSilenceDetection: v)),
+          ),
         ],
       ),
     );
@@ -164,6 +184,9 @@ extension on RecordingProfile {
     bool? cursorHighlight,
     bool? clickAnimations,
     bool? smartZoom,
+    bool? aiNoiseRemoval,
+    bool? aiAutoCaptions,
+    bool? aiSilenceDetection,
   }) {
     return RecordingProfile(
       id: id,
@@ -179,6 +202,9 @@ extension on RecordingProfile {
       clickAnimations: clickAnimations ?? this.clickAnimations,
       smartZoom: smartZoom ?? this.smartZoom,
       zoomLevel: zoomLevel,
+      aiNoiseRemoval: aiNoiseRemoval ?? this.aiNoiseRemoval,
+      aiAutoCaptions: aiAutoCaptions ?? this.aiAutoCaptions,
+      aiSilenceDetection: aiSilenceDetection ?? this.aiSilenceDetection,
     );
   }
 }

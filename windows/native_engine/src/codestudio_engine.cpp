@@ -72,6 +72,14 @@ public:
         engine_.getAudioLevels(mic, sys);
     }
 
+    const char* getNextCaption() {
+        static cs::CaptionSegment segment;
+        if (engine_.getNextCaption(segment)) {
+            return segment.text.c_str();
+        }
+        return nullptr;
+    }
+
     cs::RecordingStatus getStatus() const {
         return engine_.getStatus();
     }
@@ -152,6 +160,10 @@ CSE_API void cse_get_stats(cs::RecordingStats* stats) {
 
 CSE_API void cse_get_audio_levels(float* mic, float* system) {
     SessionManager::instance().getAudioLevels(mic, system);
+}
+
+CSE_API const char* cse_get_next_caption() {
+    return SessionManager::instance().getNextCaption();
 }
 
 CSE_API int32_t cse_get_status() {

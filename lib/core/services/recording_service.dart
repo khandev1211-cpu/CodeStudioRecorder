@@ -45,7 +45,14 @@ class RecordingService {
 
   bool get isInitialized => _isInitialized;
 
-  int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder, {String? micId, String? sysId, String? webcamId}) {
+  int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder, {
+    String? micId, 
+    String? sysId, 
+    String? webcamId,
+    bool aiNoise = false,
+    bool aiCaptions = false,
+    bool aiSilence = false,
+  }) {
     if (!_isInitialized) return -999;
 
     final configPtr = calloc<NativeRecordingConfig>();
@@ -67,6 +74,9 @@ class RecordingService {
       configPtr.ref.micDeviceId = micIdPtr;
       configPtr.ref.sysAudioDeviceId = sysIdPtr;
       configPtr.ref.webcamDeviceId = webcamIdPtr;
+      configPtr.ref.aiNoiseRemoval = aiNoise;
+      configPtr.ref.aiAutoCaptions = aiCaptions;
+      configPtr.ref.aiSilenceDetection = aiSilence;
 
       return _bindings.startRecording(configPtr);
     } finally {
@@ -109,6 +119,13 @@ class RecordingService {
       calloc.free(micPtr);
       calloc.free(sysPtr);
     }
+  }
+
+  String? getNextCaption() {
+    if (!_isInitialized) return null;
+    final ptr = _bindings.getNextCaption();
+    if (ptr == nullptr) return null;
+    return ptr.cast<Utf8>().toDartString();
   }
 
   List<({int hwnd, String title})> getWindows() {

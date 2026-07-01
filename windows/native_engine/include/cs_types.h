@@ -27,6 +27,11 @@ struct RecordingConfig {
     const char* mic_device_id;
     const char* sys_audio_device_id;
     const char* webcam_device_id;
+
+    // AI Toggles
+    bool ai_noise_removal;
+    bool ai_auto_captions;
+    bool ai_silence_detection;
 };
 
 struct RecordingStats {

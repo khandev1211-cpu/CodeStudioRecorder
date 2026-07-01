@@ -14,6 +14,11 @@ class RecordingProfile {
   final String? micDeviceId;
   final String? sysAudioDeviceId;
   final String? webcamDeviceId;
+  
+  // AI Features
+  final bool aiNoiseRemoval;
+  final bool aiAutoCaptions;
+  final bool aiSilenceDetection;
 
   RecordingProfile({
     required this.id,
@@ -31,6 +36,9 @@ class RecordingProfile {
     this.micDeviceId,
     this.sysAudioDeviceId,
     this.webcamDeviceId,
+    this.aiNoiseRemoval = false,
+    this.aiAutoCaptions = false,
+    this.aiSilenceDetection = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +57,9 @@ class RecordingProfile {
     'micDeviceId': micDeviceId,
     'sysAudioDeviceId': sysAudioDeviceId,
     'webcamDeviceId': webcamDeviceId,
+    'aiNoiseRemoval': aiNoiseRemoval,
+    'aiAutoCaptions': aiAutoCaptions,
+    'aiSilenceDetection': aiSilenceDetection,
   };
 
   factory RecordingProfile.fromJson(Map<String, dynamic> json) => RecordingProfile(
@@ -67,6 +78,9 @@ class RecordingProfile {
     micDeviceId: json['micDeviceId'],
     sysAudioDeviceId: json['sysAudioDeviceId'],
     webcamDeviceId: json['webcamDeviceId'],
+    aiNoiseRemoval: json['aiNoiseRemoval'] ?? false,
+    aiAutoCaptions: json['aiAutoCaptions'] ?? false,
+    aiSilenceDetection: json['aiSilenceDetection'] ?? false,
   );
 
   static RecordingProfile defaultProfile() => RecordingProfile(

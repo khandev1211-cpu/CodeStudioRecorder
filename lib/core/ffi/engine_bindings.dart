@@ -15,6 +15,9 @@ typedef GetStatsDart = void Function(Pointer<NativeRecordingStats>);
 typedef GetAudioLevelsNative = Void Function(Pointer<Float>, Pointer<Float>);
 typedef GetAudioLevelsDart = void Function(Pointer<Float>, Pointer<Float>);
 
+typedef GetNextCaptionNative = Pointer<Utf8> Function();
+typedef GetNextCaptionDart = Pointer<Utf8> Function();
+
 typedef GetStatusNative = Int32 Function();
 typedef GetStatusDart = int Function();
 
@@ -84,6 +87,7 @@ class EngineBindings {
   late final StopRecordingDart resumeRecording;
   late final GetStatsDart getStats;
   late final GetAudioLevelsDart getAudioLevels;
+  late final GetNextCaptionDart getNextCaption;
   late final GetStatusDart getStatus;
   late final EnumerateWindowsDart enumerateWindows;
   late final EnumerateAudioDevicesDart enumerateAudioDevices;
@@ -135,6 +139,9 @@ class EngineBindings {
         .asFunction();
     getAudioLevels = _lib
         .lookup<NativeFunction<GetAudioLevelsNative>>('cse_get_audio_levels')
+        .asFunction();
+    getNextCaption = _lib
+        .lookup<NativeFunction<GetNextCaptionNative>>('cse_get_next_caption')
         .asFunction();
     getStatus = _lib
         .lookup<NativeFunction<GetStatusNative>>('cse_get_status')
