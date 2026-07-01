@@ -57,6 +57,10 @@ if(WIN32)
         d3d11
         dxgi
         d2d1
+        mfplat
+        mf
+        mfreadwrite
+        mfuuid
         ${FFMPEG_LIBS}
     )
 

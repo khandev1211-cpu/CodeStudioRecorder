@@ -1,8 +1,5 @@
 #include "webcam_processor.h"
 #include <iostream>
-#include <mfapi.h>
-#include <mfidl.h>
-#include <mfreadwrite.h>
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <codecvt>
@@ -87,8 +84,8 @@ void WebcamProcessor::startCamera() {
     // 3. Set output format to RGB32
     Microsoft::WRL::ComPtr<IMFMediaType> type;
     MFCreateMediaType(type.GetAddressOf());
-    type->SetGUID(MF_MT_MAJOR_TYPE, MF_MT_VIDEO);
-    type->SetGUID(MF_MT_SUBTYPE, MF_MT_RGB32);
+    type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+    type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
     source_reader_->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, type.Get());
 }
 

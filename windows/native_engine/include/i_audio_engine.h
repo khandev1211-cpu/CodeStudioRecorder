@@ -6,7 +6,7 @@
 namespace cs {
 
 struct AudioBuffer {
-    const float* samples;
+    float* samples;
     uint32_t frame_count;
     uint32_t channels;
     uint32_t sample_rate;

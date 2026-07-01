@@ -3,6 +3,8 @@
 #include <wrl/client.h>
 #include <d2d1_1.h>
 #include <mutex>
+#include <mfapi.h>
+#include <mfidl.h>
 #include <mfreadwrite.h>
 
 namespace cs {
