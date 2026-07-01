@@ -80,6 +80,14 @@ public:
         engine_.setProcessorEnabled(index, enabled);
     }
 
+    void setPluginEnabled(int32_t index, bool enabled) {
+        engine_.setPluginEnabled(index, enabled);
+    }
+
+    int32_t getPluginCount() const {
+        return engine_.getPluginCount();
+    }
+
     void handleMouseClick(float x, float y) {
         engine_.handleMouseClick(x, y);
     }
@@ -214,6 +222,14 @@ CSE_API int32_t cse_get_setting_int(const char* key, int32_t default_value) {
 
 CSE_API void cse_set_processor_enabled(int32_t index, bool enabled) {
     SessionManager::instance().setProcessorEnabled(index, enabled);
+}
+
+CSE_API void cse_set_plugin_enabled(int32_t index, bool enabled) {
+    SessionManager::instance().setPluginEnabled(index, enabled);
+}
+
+CSE_API int32_t cse_get_plugin_count() {
+    return SessionManager::instance().getPluginCount();
 }
 
 CSE_API void cse_report_mouse_click(float x, float y) {

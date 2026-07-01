@@ -27,6 +27,8 @@ public:
     void getAudioLevels(float* mic_level, float* system_level);
     RecordingStatus getStatus() const;
     void setProcessorEnabled(int32_t index, bool enabled);
+    void setPluginEnabled(int32_t index, bool enabled);
+    int32_t getPluginCount() const;
     void handleMouseClick(float x, float y);
     void addAnnotation(int32_t type, float x1, float y1, float x2, float y2, uint32_t color, float width);
     void clearAnnotations();

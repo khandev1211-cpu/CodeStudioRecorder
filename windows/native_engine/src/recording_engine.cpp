@@ -14,6 +14,7 @@
 #include "annotation_processor.h"
 #include "zoom_processor.h"
 #include "webcam_processor.h"
+#include "plugin_manager.h"
 #include "cs_logger.h"
 #include "global_mouse_hook.h"
 
@@ -36,6 +37,9 @@ RecordingEngine::RecordingEngine() {
     processors_.push_back(std::make_unique<AnnotationProcessor>());       // 2
     processors_.push_back(std::make_unique<ZoomProcessor>());             // 3
     processors_.push_back(std::make_unique<WebcamProcessor>());           // 4
+
+    // Load external plugins
+    PluginManager::instance().loadPlugins("plugins");
 }
 
 RecordingEngine::~RecordingEngine() {
@@ -81,6 +85,10 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
 
     for (auto& processor : processors_) {
         processor->onStart(config);
+    }
+
+    for (auto& plugin : PluginManager::instance().getPlugins()) {
+        plugin->onStart(config);
     }
 
     {
@@ -166,6 +174,17 @@ void RecordingEngine::setProcessorEnabled(int32_t index, bool enabled) {
     }
 }
 
+void RecordingEngine::setPluginEnabled(int32_t index, bool enabled) {
+    auto& plugins = PluginManager::instance().getPlugins();
+    if (index >= 0 && index < (int32_t)plugins.size()) {
+        plugins[index]->setEnabled(enabled);
+    }
+}
+
+int32_t RecordingEngine::getPluginCount() const {
+    return (int32_t)PluginManager::instance().getPlugins().size();
+}
+
 void RecordingEngine::handleMouseClick(float x, float y) {
     if (processors_.size() > 1) {
         auto* clickProc = static_cast<ClickAnimationProcessor*>(processors_[1].get());
@@ -240,6 +259,12 @@ void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
         for (auto& processor : processors_) {
             if (processor->isEnabled()) {
                 processor->process(processedFrame, capturer_->getDevice(), capturer_->getContext());
+            }
+        }
+
+        for (auto& plugin : PluginManager::instance().getPlugins()) {
+            if (plugin->isEnabled()) {
+                plugin->process(processedFrame, capturer_->getDevice(), capturer_->getContext());
             }
         }
 

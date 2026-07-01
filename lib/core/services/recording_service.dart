@@ -161,6 +161,16 @@ class RecordingService {
     _bindings.setProcessorEnabled(index, enabled);
   }
 
+  void setPluginEnabled(int index, bool enabled) {
+    if (!_isInitialized) return;
+    _bindings.setPluginEnabled(index, enabled);
+  }
+
+  int getPluginCount() {
+    if (!_isInitialized) return 0;
+    return _bindings.getPluginCount();
+  }
+
   void reportMouseClick(double x, double y) {
     if (!_isInitialized) return;
     _bindings.reportMouseClick(x, y);

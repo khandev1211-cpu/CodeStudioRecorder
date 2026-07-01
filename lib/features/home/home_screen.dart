@@ -54,6 +54,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const AppLogo(size: 32, showText: true),
         actions: [
           IconButton(
+            icon: const Icon(Icons.extension),
+            tooltip: 'Plugins',
+            onPressed: () => context.go('/plugins'),
+          ),
+          IconButton(
             icon: const Icon(Icons.description),
             tooltip: 'Recording Profiles',
             onPressed: () => context.go('/profiles'),

@@ -45,6 +45,12 @@ typedef GetSettingIntDart = int Function(Pointer<Utf8>, int);
 typedef SetProcessorEnabledNative = Void Function(Int32, Bool);
 typedef SetProcessorEnabledDart = void Function(int, bool);
 
+typedef SetPluginEnabledNative = Void Function(Int32, Bool);
+typedef SetPluginEnabledDart = void Function(int, bool);
+
+typedef GetPluginCountNative = Int32 Function();
+typedef GetPluginCountDart = int Function();
+
 typedef ReportMouseClickNative = Void Function(Float, Float);
 typedef ReportMouseClickDart = void Function(double, double);
 
@@ -88,6 +94,8 @@ class EngineBindings {
   late final SetSettingIntDart setSettingInt;
   late final GetSettingIntDart getSettingInt;
   late final SetProcessorEnabledDart setProcessorEnabled;
+  late final SetPluginEnabledDart setPluginEnabled;
+  late final GetPluginCountDart getPluginCount;
   late final ReportMouseClickDart reportMouseClick;
   late final AddAnnotationDart addAnnotation;
   late final ClearAnnotationsDart clearAnnotations;
@@ -154,6 +162,12 @@ class EngineBindings {
         .asFunction();
     setProcessorEnabled = _lib
         .lookup<NativeFunction<SetProcessorEnabledNative>>('cse_set_processor_enabled')
+        .asFunction();
+    setPluginEnabled = _lib
+        .lookup<NativeFunction<SetPluginEnabledNative>>('cse_set_plugin_enabled')
+        .asFunction();
+    getPluginCount = _lib
+        .lookup<NativeFunction<GetPluginCountNative>>('cse_get_plugin_count')
         .asFunction();
     reportMouseClick = _lib
         .lookup<NativeFunction<ReportMouseClickNative>>('cse_report_mouse_click')
