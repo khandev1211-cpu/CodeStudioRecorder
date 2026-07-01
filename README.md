@@ -1,6 +1,6 @@
 # CodeStudio Recorder 🎥
 
-**CodeStudio Recorder** is a high-performance, professional-grade screen recording platform for Windows. Built with a modern **Flutter** frontend and a specialized **C++20 Native Engine**, it is designed for creators, developers, and educators who need low-latency, high-fidelity captures with real-time visual effects.
+**CodeStudio Recorder** is a high-performance, professional-grade screen recording platform for Windows. Built with a modern **Flutter** frontend and a specialized **C++20 Native Engine**, it is designed for creators, developers, and educators who need low-latency, high-fidelity captures with real-time visual and AI-driven effects.
 
 ![Build Status](https://github.com/khandev1211-cpu/CodeStudioRecorder/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -10,35 +10,40 @@
 
 ---
 
-## 🚀 Project Status: Phase 2 (Creator Tools)
-The project is currently in **Phase 2: Professional Creator Tools**. We have successfully stabilized the hardware capture pipeline and are actively implementing real-time frame processors.
+## 🚀 Project Status: Phase 4 (AI Augmented)
+The project has evolved into **Phase 4: AI Augmented Production**. We have successfully integrated local AI models for audio and video enhancement, alongside a robust plugin architecture.
 
 - [x] **Real-time Cursor Highlighting** (Direct2D)
-- [x] **Expanding Click Animations** (Direct2D)
-- [x] **Global Mouse Hook** (System-wide clicks)
+- [x] **Expanding Click Animations** (Direct2D + Global Hook)
+- [x] **Smart Zoom** (Smoothed cursor tracking)
+- [x] **Webcam PiP** (Media Foundation integration)
 - [x] **Audio Visualization** (Real-time peak meters)
-- [x] **Automated Cloud Builds** (GitHub Actions)
 - [x] **Hardware-specific Encoding** (NVENC, AMF, QSV)
-- [x] **Advanced Profile Management** (Device selection)
-- [x] **Smart Zoom** (In progress - smoothing implemented)
-- [x] **AI Noise Removal** (Placeholder logic in engine)
-- [x] **AI Auto-Captions** (Whisper integration foundation)
+- [x] **C++ Plugin SDK** (Extensible frame processors)
+- [x] **AI Noise Removal** (Real-time audio cleaning)
+- [x] **AI Auto-Captions** (Local Whisper integration)
 - [x] **AI Silence Detection** (Energy-based VAD)
+- [x] **System Integrity** (Pre-flight requirement checks)
 
 ---
 
 ## ✨ Key Features
 
 ### 🔥 Pro-Grade Performance
-- **WGC Capture**: Native integration with the Windows Graphics Capture API for 60FPS+ window and monitor recording.
+- **WGC Capture**: Native integration with the Windows Graphics Capture API for 60FPS+ capture.
 - **Hardware Accelerated**: Optimized paths for **NVENC** (NVIDIA), **QuickSync** (Intel), and **AMF** (AMD).
-- **Pro Audio**: Low-latency system loopback and microphone capture via **WASAPI**.
-- **Zero-Copy Pipeline**: Ultra-efficient frame transfer using lock-free SPSC ring buffers and pre-allocated GPU texture pools.
+- **Zero-Copy Pipeline**: Ultra-efficient frame transfer using GPU texture pools.
+- **Pro Audio**: Multi-device support via **WASAPI** with real-time level monitoring.
 
-### 🛠 Professional Effects (Real-time)
-- **Cursor Focus**: Draw high-visibility highlights around the mouse cursor automatically.
-- **Visual Clicks**: Dynamic ripple animations appear exactly where you click in the recording.
-- **Permission Safe**: Smart path management handles Windows Security folder blocks automatically.
+### 🤖 AI-Native Pipeline
+- **Local Whisper Captions**: Real-time speech-to-text generated locally on your machine.
+- **Smart Zoom**: Professional follow-cam logic that smoothly tracks your workspace.
+- **Noise Suppression**: AI-driven audio cleaning to remove fans and background hum.
+
+### 🧩 Extensibility & Tools
+- **Plugin SDK**: Build custom overlays and effects in C++ and load them as DLLs.
+- **Profile Management**: Save custom configurations for different recording scenarios.
+- **Annotation Suite**: Draw directly on the screen during recording (lines, arrows, shapes).
 
 ---
 
@@ -47,11 +52,12 @@ The project is currently in **Phase 2: Professional Creator Tools**. We have suc
 CodeStudio uses a strict **Layered Architecture** to ensure UI responsiveness and engine stability:
 
 1.  **Flutter UI Layer**: A reactive Material 3 interface managed by **Riverpod**.
-2.  **FFI Bridge**: A type-safe Dart-to-C++ bridge using **dart:ffi**.
+2.  **FFI Bridge**: A high-performance type-safe bridge using **dart:ffi**.
 3.  **Native Engine (C++20)**:
     *   **CaptureEngine**: WinRT-based frame acquisition.
     *   **AudioEngine**: WASAPI session management and mixing.
-    *   **ProcessorPipeline**: Direct2D-powered real-time frame effects.
+    *   **AIProcessor**: Local inference for VAD, Noise, and Captions.
+    *   **PluginManager**: Dynamic DLL loader for external processors.
     *   **EncodingEngine**: FFmpeg-based hardware stream orchestration.
 
 ---
@@ -60,8 +66,8 @@ CodeStudio uses a strict **Layered Architecture** to ensure UI responsiveness an
 
 ### Installation
 1. **Download**: Grab the latest `CodeStudioRecorder_Setup.exe` from the [Releases](https://github.com/khandev1211-cpu/CodeStudioRecorder/releases) page.
-2. **Install**: Run the installer. It will handle system checks and ensure the **FFmpeg** environment is correctly configured.
-3. **Launch**: Open from your Start Menu or Desktop.
+2. **Install**: Run the installer. It will handle system checks and configure the environment.
+3. **Launch**: Open from your Start Menu. The app will perform a quick integrity check on first run.
 
 ### Prerequisites (Development)
 - **Flutter SDK** (^3.4.0)
@@ -81,43 +87,30 @@ flutter run -d windows
 ## 📚 Documentation
 
 ### 1. Project Structure
-- **`lib/`**: Flutter frontend implementation. Follows a feature-first structure using Riverpod for state management.
+- **`lib/`**: Flutter frontend implementation (Feature-first architecture).
 - **`windows/native_engine/`**: High-performance C++20 backend.
-    - `src/`: Implementation of capture (WGC), audio (WASAPI), and encoding (FFmpeg).
-    - `include/`: Public headers for the Dart-C++ FFI bridge.
+    - `src/`: Core implementation (Capture, Audio, AI, Encoding).
+    - `include/`: FFI headers and Plugin SDK interfaces.
+- **`docs/`**: Detailed technical guides for each module.
 
 ### 2. Building from Source
-#### Flutter Frontend
-1. Install [Flutter SDK](https://docs.flutter.dev/get-started/install/windows).
-2. Run `flutter pub get` to fetch dependencies.
-3. Use `flutter run -d windows` to launch the application in debug mode.
-
 #### Native Engine (C++)
-The engine is automatically built by the Flutter toolchain using CMake.
-1. Ensure **Visual Studio 2022** with "Desktop development with C++" is installed.
-2. The build configuration is defined in `windows/CMakeLists.txt` and `windows/native_engine/CMakeLists.txt`.
-3. To build manually (advanced):
-   ```bash
-   cd windows
-   cmake -B build
-   cmake --build build --config Release
-   ```
-
-### 3. Key Components
-- **`CaptureEngine`**: Handles WinRT-based frame acquisition with zero-copy texture sharing.
-- **`AudioEngine`**: Manages WASAPI streams for system loopback and microphone input.
-- **`FFmpegEncoder`**: Orchestrates hardware encoders (NVENC, AMF, QSV) via the FFmpeg libraries.
-
-> For more detailed technical guides, check the [docs/](./docs) directory.
+The engine is built automatically by Flutter, but can be built manually via CMake:
+```bash
+cd windows
+cmake -B build
+cmake --build build --config Release
+```
 
 ---
 
 ## 🗺 Roadmap
 
-- **Phase 1 (MVP)**: Core capture coordination, WASAPI audio, and history management. (STABLE)
-- **Phase 2 (Creator Tools)**: Cursor effects, click animations, zoom-on-cursor. (ACTIVE)
-- **Phase 3 (Plugins)**: C++ SDK for custom overlays and encoders.
-- **Phase 4 (AI Features)**: Local Whisper captions and Smart Zoom.
+- **Phase 1 (MVP)**: Core capture and history management. (STABLE)
+- **Phase 2 (Creator Tools)**: Cursor effects and Smart Zoom. (STABLE)
+- **Phase 3 (Extensibility)**: C++ Plugin SDK and Webcam support. (STABLE)
+- **Phase 4 (AI Features)**: Local Whisper captions and Noise removal. (STABLE)
+- **Phase 5 (Post-Production)**: In-app editor and AI-driven highlight clipping. (UPCOMING)
 
 ---
 
