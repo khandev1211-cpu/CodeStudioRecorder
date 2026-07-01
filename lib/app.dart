@@ -6,10 +6,15 @@ import 'package:codestudio_recorder/features/settings/settings_screen.dart';
 import 'package:codestudio_recorder/features/profiles/profiles_screen.dart';
 import 'package:codestudio_recorder/features/profiles/profile_details_screen.dart';
 import 'package:codestudio_recorder/features/plugins/plugins_screen.dart';
+import 'package:codestudio_recorder/features/home/setup_screen.dart';
 
 final _router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/setup',
   routes: [
+    GoRoute(
+      path: '/setup',
+      builder: (context, state) => const SetupScreen(),
+    ),
     GoRoute(
       path: '/',
       builder: (context, state) => const HomeScreen(),

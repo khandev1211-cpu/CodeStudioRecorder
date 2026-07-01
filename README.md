@@ -58,14 +58,15 @@ CodeStudio uses a strict **Layered Architecture** to ensure UI responsiveness an
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Installation
+1. **Download**: Grab the latest `CodeStudioRecorder_Setup.exe` from the [Releases](https://github.com/khandev1211-cpu/CodeStudioRecorder/releases) page.
+2. **Install**: Run the installer. It will handle system checks and ensure the **FFmpeg** environment is correctly configured.
+3. **Launch**: Open from your Start Menu or Desktop.
+
+### Prerequisites (Development)
 - **Flutter SDK** (^3.4.0)
 - **Visual Studio 2022** (with "Desktop development with C++" workload)
 - **Windows 10 1903+** (Required for WGC support)
-
-### Quick Start
-1. **Download**: Grab the latest `.zip` from the [Releases](https://github.com/khandev1211-cpu/CodeStudioRecorder/releases) page.
-2. **Run**: Extract and launch `codestudio_recorder.exe`.
 
 ### Development Build
 ```bash

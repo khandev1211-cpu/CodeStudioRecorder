@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(codestudio_recorder LANGUAGES CXX)
 
-set(BINARY_NAME "codestudio_recorder")
+set(BINARY_NAME "CodeStudioRecorder")
 
 cmake_policy(VERSION 3.14...3.25)
 

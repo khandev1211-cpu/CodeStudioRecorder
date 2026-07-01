@@ -42,6 +42,7 @@ add_library(codestudio_engine SHARED
     src/plugin_manager.cpp
     src/ai_processor.cpp
     src/caption_engine.cpp
+    src/system_check.cpp
 )
 
 if(WIN32)

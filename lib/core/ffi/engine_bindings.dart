@@ -78,6 +78,9 @@ typedef AddChapterMarkerDart = void Function(Pointer<Utf8>);
 typedef GenerateThumbnailNative = Int32 Function(Pointer<Utf8>, Pointer<Utf8>);
 typedef GenerateThumbnailDart = int Function(Pointer<Utf8>, Pointer<Utf8>);
 
+typedef CheckSystemRequirementsNative = Bool Function();
+typedef CheckSystemRequirementsDart = bool Function();
+
 class EngineBindings {
   late final DynamicLibrary _lib;
 
@@ -108,6 +111,7 @@ class EngineBindings {
   late final SetWebcamPositionDart setWebcamPosition;
   late final AddChapterMarkerDart addChapterMarker;
   late final GenerateThumbnailDart generateThumbnail;
+  late final CheckSystemRequirementsDart checkSystemRequirements;
 
   EngineBindings() {
     _lib = _loadLibrary();
@@ -199,6 +203,9 @@ class EngineBindings {
         .asFunction();
     generateThumbnail = _lib
         .lookup<NativeFunction<GenerateThumbnailNative>>('cse_generate_thumbnail')
+        .asFunction();
+    checkSystemRequirements = _lib
+        .lookup<NativeFunction<CheckSystemRequirementsNative>>('cse_check_system_requirements')
         .asFunction();
   }
 }

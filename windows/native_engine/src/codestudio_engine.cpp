@@ -15,6 +15,7 @@
 #include "window_utils.h"
 #include "audio_utils.h"
 #include "webcam_utils.h"
+#include "system_check.h"
 #include "settings_manager.h"
 #include "encoder_factory.h"
 #include "cs_logger.h"
@@ -276,6 +277,14 @@ CSE_API int32_t cse_generate_thumbnail(const char* video_path, const char* thumb
     if (!video_path || !thumb_path) return -1;
     auto encoder = cs::EncoderFactory::createEncoder();
     return encoder->generateThumbnail(video_path, thumb_path) ? 0 : -2;
+}
+
+CSE_API bool cse_check_system_requirements() {
+    auto results = cs::SystemCheck::runFullCheck();
+    for (const auto& res : results) {
+        if (!res.met) return false;
+    }
+    return true;
 }
 
 } // extern "C"

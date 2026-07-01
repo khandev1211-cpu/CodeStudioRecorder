@@ -222,4 +222,9 @@ class RecordingService {
     if (!_isInitialized) return;
     _bindings.addChapterMarker(label.toNativeUtf8());
   }
+
+  bool checkSystemRequirements() {
+    if (!_isInitialized) return false;
+    return _bindings.checkSystemRequirements();
+  }
 }
