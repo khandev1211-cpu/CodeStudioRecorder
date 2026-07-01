@@ -37,9 +37,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Flutter Build Output
 Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 ; Native DLL
-Source: "build\windows\x64\native_engine\Release\codestudio_engine.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\windows\x64\native_engine\Release\codestudio_engine.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 ; FFmpeg DLLs
-Source: "third_party\ffmpeg\bin\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "third_party\ffmpeg\bin\*.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 ; Documentation
 Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
