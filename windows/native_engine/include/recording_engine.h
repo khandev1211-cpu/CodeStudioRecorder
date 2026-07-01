@@ -12,6 +12,7 @@
 #include <mutex>
 #include <chrono>
 #include <vector>
+#include <string>
 
 namespace cs {
 

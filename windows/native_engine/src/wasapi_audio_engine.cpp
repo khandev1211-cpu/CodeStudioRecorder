@@ -1,6 +1,8 @@
 #include "wasapi_audio_engine.h"
 #include <iostream>
 #include <avrt.h>
+#include <codecvt>
+#include <locale>
 
 #pragma comment(lib, "avrt.lib")
 

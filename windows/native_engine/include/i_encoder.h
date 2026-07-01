@@ -2,6 +2,7 @@
 #include "cs_types.h"
 #include "i_capturer.h"
 #include "i_audio_engine.h"
+#include <string>
 
 namespace cs {
 

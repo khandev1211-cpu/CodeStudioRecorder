@@ -33,18 +33,6 @@ void AudioMixer::pushSystemBuffer(const AudioBuffer& buffer) {
 }
 
 bool AudioMixer::getNextMixedBuffer(std::vector<float>& output, uint32_t& channels, uint32_t& sample_rate) {
-    // ... (rest of the method stays same)
-}
-
-void AudioMixer::getLevels(float* mic_level, float* system_level) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (mic_level) *mic_level = last_mic_peak_;
-    if (system_level) *system_level = last_system_peak_;
-
-    // Decay peaks slightly for smoother UI if not updated
-    last_mic_peak_ *= 0.8f;
-    last_system_peak_ *= 0.8f;
-}
     std::lock_guard<std::mutex> lock(mutex_);
 
     size_t samples_to_mix = std::min(mic_queue_.size(), system_queue_.size());
@@ -80,6 +68,16 @@ void AudioMixer::getLevels(float* mic_level, float* system_level) {
     channels = target_channels_;
     sample_rate = target_sample_rate_;
     return true;
+}
+
+void AudioMixer::getLevels(float* mic_level, float* system_level) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (mic_level) *mic_level = last_mic_peak_;
+    if (system_level) *system_level = last_system_peak_;
+
+    // Decay peaks slightly for smoother UI if not updated
+    last_mic_peak_ *= 0.8f;
+    last_system_peak_ *= 0.8f;
 }
 
 } // namespace cs

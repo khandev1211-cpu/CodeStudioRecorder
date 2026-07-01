@@ -82,11 +82,11 @@ void WebcamProcessor::startCamera() {
     readerAttrs->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
     readerAttrs->SetUINT32(MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, TRUE);
 
-    MFCreateSourceReaderFromMediaSource(source.Get(), readerAttrs.Get(), &source_reader_);
+    MFCreateSourceReaderFromMediaSource(source.Get(), readerAttrs.Get(), source_reader_.GetAddressOf());
 
     // 3. Set output format to RGB32
     Microsoft::WRL::ComPtr<IMFMediaType> type;
-    MFCreateMediaType(&type);
+    MFCreateMediaType(type.GetAddressOf());
     type->SetGUID(MF_MT_MAJOR_TYPE, MF_MT_VIDEO);
     type->SetGUID(MF_MT_SUBTYPE, MF_MT_RGB32);
     source_reader_->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, type.Get());
@@ -127,11 +127,11 @@ void WebcamProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D11Dev
     LONGLONG timestamp;
     Microsoft::WRL::ComPtr<IMFSample> sample;
 
-    HRESULT hr = source_reader_->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, &streamIndex, &flags, &timestamp, &sample);
+    HRESULT hr = source_reader_->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, &streamIndex, &flags, &timestamp, sample.GetAddressOf());
 
     if (SUCCEEDED(hr) && sample) {
         Microsoft::WRL::ComPtr<IMFMediaBuffer> buffer;
-        sample->ConvertToContiguousBuffer(&buffer);
+        sample->ConvertToContiguousBuffer(buffer.GetAddressOf());
 
         BYTE* data = nullptr;
         DWORD maxLength = 0, currentLength = 0;
@@ -139,7 +139,7 @@ void WebcamProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D11Dev
 
         // Get format info for dimensions
         Microsoft::WRL::ComPtr<IMFMediaType> type;
-        source_reader_->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &type);
+        source_reader_->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, type.GetAddressOf());
         UINT32 w, h;
         MFGetAttributeSize(type.Get(), MF_MT_FRAME_SIZE, &w, &h);
 

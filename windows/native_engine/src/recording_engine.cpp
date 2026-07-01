@@ -20,8 +20,6 @@
 
 namespace cs {
 
-namespace cs {
-
 RecordingEngine::RecordingEngine() {
     CS_LOG_INFO("Initializing Recording Engine");
 

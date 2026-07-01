@@ -28,9 +28,9 @@ private:
     std::string levelToString(LogLevel level);
 };
 
-#define CS_LOG_DEBUG(msg) cs::Logger::instance().log(cs::LogLevel::Debug, msg)
-#define CS_LOG_INFO(msg) cs::Logger::instance().log(cs::LogLevel::Info, msg)
-#define CS_LOG_WARN(msg) cs::Logger::instance().log(cs::LogLevel::Warning, msg)
-#define CS_LOG_ERR(msg) cs::Logger::instance().log(cs::LogLevel::Error, msg)
+#define CS_LOG_DEBUG(msg) ::cs::Logger::instance().log(::cs::LogLevel::Debug, msg)
+#define CS_LOG_INFO(msg) ::cs::Logger::instance().log(::cs::LogLevel::Info, msg)
+#define CS_LOG_WARN(msg) ::cs::Logger::instance().log(::cs::LogLevel::Warning, msg)
+#define CS_LOG_ERR(msg) ::cs::Logger::instance().log(::cs::LogLevel::Error, msg)
 
 } // namespace cs
