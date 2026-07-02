@@ -152,8 +152,7 @@ bool FFmpegEncoder::initAudio(const RecordingConfig& config) {
     audio_codec_ctx_->sample_fmt = AV_SAMPLE_FMT_FLTP;
     audio_codec_ctx_->bit_rate = 128000;
     audio_codec_ctx_->sample_rate = 48000;
-    audio_codec_ctx_->channel_layout = AV_CH_LAYOUT_STEREO;
-    audio_codec_ctx_->channels = av_get_channel_layout_nb_channels(audio_codec_ctx_->channel_layout);
+    av_channel_layout_default(&audio_codec_ctx_->ch_layout, 2);
 
     if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER)
         audio_codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -168,18 +167,22 @@ bool FFmpegEncoder::initAudio(const RecordingConfig& config) {
     audio_frame_ = av_frame_alloc();
     audio_frame_->format = audio_codec_ctx_->sample_fmt;
     audio_frame_->sample_rate = audio_codec_ctx_->sample_rate;
-    audio_frame_->channel_layout = audio_codec_ctx_->channel_layout;
+    av_channel_layout_copy(&audio_frame_->ch_layout, &audio_codec_ctx_->ch_layout);
     audio_frame_->nb_samples = audio_codec_ctx_->frame_size;
     av_frame_get_buffer(audio_frame_, 0);
 
     swr_ctx_ = swr_alloc();
-    av_opt_set_int(swr_ctx_, "in_channel_layout", AV_CH_LAYOUT_STEREO, 0);
+    AVChannelLayout in_ch_layout;
+    av_channel_layout_default(&in_ch_layout, 2);
+
+    av_opt_set_chlayout(swr_ctx_, "in_chlayout", &in_ch_layout, 0);
     av_opt_set_int(swr_ctx_, "in_sample_rate", 48000, 0);
     av_opt_set_sample_fmt(swr_ctx_, "in_sample_fmt", AV_SAMPLE_FMT_FLT, 0);
-    av_opt_set_int(swr_ctx_, "out_channel_layout", AV_CH_LAYOUT_STEREO, 0);
+    av_opt_set_chlayout(swr_ctx_, "out_chlayout", &audio_codec_ctx_->ch_layout, 0);
     av_opt_set_int(swr_ctx_, "out_sample_rate", 48000, 0);
     av_opt_set_sample_fmt(swr_ctx_, "out_sample_fmt", AV_SAMPLE_FMT_FLTP, 0);
     swr_init(swr_ctx_);
+    av_channel_layout_uninit(&in_ch_layout);
 
     return true;
 #else
