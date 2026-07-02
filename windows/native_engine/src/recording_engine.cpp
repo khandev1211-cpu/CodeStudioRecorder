@@ -75,7 +75,7 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
         return -3;
     }
 
-    texture_pool_ = std::make_unique<TexturePool>(capturer_->getDevice());
+    texture_pool_ = std::make_unique<TexturePool>(capturer_->getDevice(), size_t(10));
 
     bool mic_ok = false;
     bool sys_ok = false;
