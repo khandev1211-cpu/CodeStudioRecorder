@@ -275,6 +275,33 @@ void FFmpegEncoder::finalize() {
     std::lock_guard<std::mutex> lock(encoder_mutex_);
     if (format_ctx_) {
         CS_LOG_INFO("FFmpegEncoder: Finalizing stream");
+
+        // Flush video encoder
+        if (video_codec_ctx_) {
+            avcodec_send_frame(video_codec_ctx_, nullptr);
+            AVPacket* pkt = av_packet_alloc();
+            while (avcodec_receive_packet(video_codec_ctx_, pkt) == 0) {
+                av_packet_rescale_ts(pkt, video_codec_ctx_->time_base, video_stream_->time_base);
+                pkt->stream_index = video_stream_->index;
+                av_interleaved_write_frame(format_ctx_, pkt);
+                av_packet_unref(pkt);
+            }
+            av_packet_free(&pkt);
+        }
+
+        // Flush audio encoder
+        if (audio_codec_ctx_) {
+            avcodec_send_frame(audio_codec_ctx_, nullptr);
+            AVPacket* pkt = av_packet_alloc();
+            while (avcodec_receive_packet(audio_codec_ctx_, pkt) == 0) {
+                av_packet_rescale_ts(pkt, audio_codec_ctx_->time_base, audio_stream_->time_base);
+                pkt->stream_index = audio_stream_->index;
+                av_interleaved_write_frame(format_ctx_, pkt);
+                av_packet_unref(pkt);
+            }
+            av_packet_free(&pkt);
+        }
+
         av_write_trailer(format_ctx_);
 
         if (video_codec_ctx_) avcodec_free_context(&video_codec_ctx_);

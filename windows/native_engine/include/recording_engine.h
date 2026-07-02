@@ -7,6 +7,7 @@
 #include "i_frame_processor.h"
 #include "ai_processor.h"
 #include "caption_engine.h"
+#include "texture_pool.h"
 #include <memory>
 #include <atomic>
 #include <mutex>
@@ -53,6 +54,7 @@ private:
     std::unique_ptr<AINoiseSuppressor> noise_suppressor_;
     std::unique_ptr<AISilenceDetector> silence_detector_;
     std::unique_ptr<CaptionEngine> caption_engine_;
+    std::unique_ptr<TexturePool> texture_pool_;
 
     struct MarkerInternal {
         int64_t timestamp_ms;

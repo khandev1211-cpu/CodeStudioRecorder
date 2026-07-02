@@ -75,6 +75,8 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
         return -3;
     }
 
+    texture_pool_ = std::make_unique<TexturePool>(capturer_->getDevice());
+
     bool mic_ok = false;
     bool sys_ok = false;
     if (config.capture_audio) {
@@ -267,7 +269,15 @@ std::vector<ChapterMarker> RecordingEngine::getMarkers() const {
 
 void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
     if (status_ == RecordingStatus::Recording) {
+        // Copy capture frame to a pool-managed texture that supports D2D drawing
+        auto target_tex = texture_pool_->acquire(frame.width, frame.height, DXGI_FORMAT_B8G8R8A8_UNORM);
+        if (!target_tex) return;
+
+        capturer_->getContext()->CopyResource(target_tex.Get(), static_cast<ID3D11Texture2D*>(frame.data));
+
         VideoFrame processedFrame = frame;
+        processedFrame.data = target_tex.Get();
+
         for (auto& processor : processors_) {
             if (processor->isEnabled()) {
                 processor->process(processedFrame, capturer_->getDevice(), capturer_->getContext());
@@ -281,6 +291,8 @@ void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
         }
 
         encoder_->encodeVideoFrame(processedFrame);
+
+        texture_pool_->release(target_tex);
 
         std::lock_guard<std::mutex> lock(stats_mutex_);
         auto now = std::chrono::steady_clock::now();
