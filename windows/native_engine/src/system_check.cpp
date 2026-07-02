@@ -58,14 +58,25 @@ bool SystemCheck::checkD3D11() {
 
 bool SystemCheck::checkFFmpeg() {
 #ifdef USE_REAL_FFMPEG
-    // In a real app, we check if the DLLs are in the path or app directory
-    const char* libs[] = { "avcodec-60.dll", "avformat-60.dll", "avutil-58.dll" };
-    for (const char* lib : libs) {
+    // Check for FFmpeg 6.x or 7.x DLLs
+    const char* libs7[] = { "avcodec-61.dll", "avformat-61.dll", "avutil-58.dll" };
+    const char* libs6[] = { "avcodec-60.dll", "avformat-60.dll", "avutil-58.dll" };
+
+    bool found7 = true;
+    for (const char* lib : libs7) {
         HMODULE h = LoadLibraryA(lib);
-        if (!h) return false;
+        if (!h) { found7 = false; break; }
         FreeLibrary(h);
     }
-    return true;
+    if (found7) return true;
+
+    bool found6 = true;
+    for (const char* lib : libs6) {
+        HMODULE h = LoadLibraryA(lib);
+        if (!h) { found6 = false; break; }
+        FreeLibrary(h);
+    }
+    return found6;
 #else
     return true; // Mock mode doesn't need them
 #endif
