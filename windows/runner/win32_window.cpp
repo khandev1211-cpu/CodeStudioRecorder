@@ -144,6 +144,11 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
+  // Set the window icon explicitly for the taskbar
+  HICON hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_APP_ICON));
+  SendMessage(window, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+  SendMessage(window, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+
   UpdateTheme(window);
 
   return OnCreate();
