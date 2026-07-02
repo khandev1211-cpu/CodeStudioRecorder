@@ -2,6 +2,7 @@
 #include "cs_logger.h"
 #include <iostream>
 #include <vector>
+#include <d3d11.h>
 
 #ifdef USE_REAL_FFMPEG
 extern "C" {
@@ -24,6 +25,7 @@ FFmpegEncoder::~FFmpegEncoder() {
 
 bool FFmpegEncoder::initialize(const RecordingConfig& config) {
 #ifdef USE_REAL_FFMPEG
+    std::lock_guard<std::mutex> lock(encoder_mutex_);
     CS_LOG_INFO("FFmpegEncoder: Initializing output: " + std::string(config.output_path));
 
     avformat_alloc_output_context2(&format_ctx_, nullptr, nullptr, config.output_path);
@@ -187,8 +189,57 @@ bool FFmpegEncoder::initAudio(const RecordingConfig& config) {
 
 void FFmpegEncoder::encodeVideoFrame(const VideoFrame& frame) {
 #ifdef USE_REAL_FFMPEG
-    if (!video_codec_ctx_) return;
-    // ... Real encoding logic ...
+    if (!video_codec_ctx_ || !frame.data) return;
+
+    std::lock_guard<std::mutex> lock(encoder_mutex_);
+
+    ID3D11Texture2D* source_texture = static_cast<ID3D11Texture2D*>(frame.data);
+    ID3D11Device* device = nullptr;
+    source_texture->GetDevice(&device);
+    ID3D11DeviceContext* context = nullptr;
+    device->GetImmediateContext(&context);
+
+    // 1. Create/Ensure staging texture for CPU access
+    if (!staging_texture_) {
+        D3D11_TEXTURE2D_DESC desc;
+        source_texture->GetDesc(&desc);
+        desc.Usage = D3D11_USAGE_STAGING;
+        desc.BindFlags = 0;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        desc.MiscFlags = 0;
+        device->CreateTexture2D(&desc, nullptr, &staging_texture_);
+    }
+
+    // 2. Copy from GPU to Staging
+    context->CopyResource(staging_texture_, source_texture);
+
+    // 3. Map staging texture and convert to AVFrame
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    if (SUCCEEDED(context->Map(staging_texture_, 0, D3D11_MAP_READ, 0, &mapped))) {
+        // Convert BGRA (Windows Capture) to YUV420P (H.264)
+        const uint8_t* src_data[] = { (const uint8_t*)mapped.pData };
+        int src_linesize[] = { (int)mapped.RowPitch };
+
+        sws_scale(sws_ctx_, src_data, src_linesize, 0, video_codec_ctx_->height, video_frame_->data, video_frame_->linesize);
+
+        video_frame_->pts = video_pts_++;
+
+        AVPacket* pkt = av_packet_alloc();
+        if (avcodec_send_frame(video_codec_ctx_, video_frame_) >= 0) {
+            while (avcodec_receive_packet(video_codec_ctx_, pkt) == 0) {
+                av_packet_rescale_ts(pkt, video_codec_ctx_->time_base, video_stream_->time_base);
+                pkt->stream_index = video_stream_->index;
+                av_interleaved_write_frame(format_ctx_, pkt);
+                av_packet_unref(pkt);
+            }
+        }
+        av_packet_free(&pkt);
+
+        context->Unmap(staging_texture_, 0);
+    }
+
+    context->Release();
+    device->Release();
 #endif
 }
 
@@ -218,6 +269,7 @@ void FFmpegEncoder::encodeAudioBuffer(const AudioBuffer& buffer) {
 
 void FFmpegEncoder::finalize() {
 #ifdef USE_REAL_FFMPEG
+    std::lock_guard<std::mutex> lock(encoder_mutex_);
     if (format_ctx_) {
         CS_LOG_INFO("FFmpegEncoder: Finalizing stream");
         av_write_trailer(format_ctx_);
@@ -228,12 +280,14 @@ void FFmpegEncoder::finalize() {
         if (audio_frame_) av_frame_free(&audio_frame_);
         if (sws_ctx_) sws_freeContext(sws_ctx_);
         if (swr_ctx_) swr_free(&swr_ctx_);
+        if (staging_texture_) staging_texture_->Release();
 
         if (!(format_ctx_->oformat->flags & AVFMT_NOFILE))
             avio_closep(&format_ctx_->pb);
 
         avformat_free_context(format_ctx_);
         format_ctx_ = nullptr;
+        staging_texture_ = nullptr;
     }
 #endif
 }

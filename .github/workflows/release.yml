@@ -27,6 +27,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Download FFmpeg (Windows Shared)
+        shell: pwsh
+        run: |
+          $url = "https://github.com/GyanD/codexffmpeg/releases/download/7.1/ffmpeg-7.1-full_build-shared.zip"
+          curl.exe -L $url -o ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_temp
+          mkdir -p third_party/ffmpeg
+          mv ffmpeg_temp/ffmpeg-7.1-full_build-shared/* third_party/ffmpeg/
+          # Ensure bin exists in the expected place for installer
+          ls third_party/ffmpeg
+
       - name: Build Windows
         run: flutter build windows --release
 

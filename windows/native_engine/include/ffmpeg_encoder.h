@@ -12,6 +12,11 @@ struct AVPacket;
 struct SwsContext;
 struct SwrContext;
 
+#include <mutex>
+
+// Forward declarations
+struct ID3D11Texture2D;
+
 namespace cs {
 
 class FFmpegEncoder : public IEncoder {
@@ -37,6 +42,7 @@ private:
     AVStream* video_stream_ = nullptr;
     AVFrame* video_frame_ = nullptr;
     SwsContext* sws_ctx_ = nullptr;
+    ID3D11Texture2D* staging_texture_ = nullptr;
 
     // Audio
     AVCodecContext* audio_codec_ctx_ = nullptr;
@@ -46,6 +52,7 @@ private:
 
     int64_t video_pts_ = 0;
     int64_t audio_pts_ = 0;
+    std::mutex encoder_mutex_;
 };
 
 } // namespace cs
