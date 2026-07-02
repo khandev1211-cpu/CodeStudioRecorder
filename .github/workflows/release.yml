@@ -33,16 +33,18 @@ jobs:
           $url = "https://github.com/GyanD/codexffmpeg/releases/download/7.1/ffmpeg-7.1-full_build-shared.zip"
           curl.exe -L $url -o ffmpeg.zip
           Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_temp
-          mkdir -p third_party/ffmpeg
-          # The zip contains a subfolder like ffmpeg-7.1-full_build-shared
+          New-Item -ItemType Directory -Force -Path "third_party/ffmpeg"
           $subfolder = Get-ChildItem -Path ffmpeg_temp -Directory | Select-Object -First 1
-          Move-Item -Path "$($subfolder.FullName)\*" -Destination "third_party/ffmpeg/" -Force
-          # Verify structure
-          if (Test-Path "third_party/ffmpeg/include/libavcodec/avcodec.h") {
-            Write-Host "FFmpeg headers placed correctly."
+          Copy-Item -Path "$($subfolder.FullName)\*" -Destination "third_party/ffmpeg/" -Recurse -Force
+          
+          # Verify the .lib files exist for the linker
+          if (Test-Path "third_party/ffmpeg/lib/avcodec.lib") {
+            Write-Host "FFmpeg .lib files found in lib/"
+          } elseif (Test-Path "third_party/ffmpeg/lib/x64/avcodec.lib") {
+            Write-Host "FFmpeg .lib files found in lib/x64/"
           } else {
-            Write-Error "FFmpeg headers NOT found in expected location!"
-            ls -R third_party/ffmpeg
+            Write-Error "FFmpeg .lib files NOT found!"
+            Get-ChildItem -Path "third_party/ffmpeg" -Recurse
           }
 
       - name: Build Windows

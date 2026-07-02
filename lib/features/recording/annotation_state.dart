@@ -44,7 +44,11 @@ class AnnotationNotifier extends StateNotifier<AnnotationState> {
   final RecordingService _service;
   AnnotationNotifier(this._service) : super(AnnotationState());
 
-  void setTool(AnnotationTool tool) => state = state.copyWith(tool: tool);
+  void setTool(AnnotationTool tool) {
+    state = state.copyWith(tool: tool);
+    // Automatically enable the native annotation processor when a tool is selected
+    _service.setProcessorEnabled(2, tool != AnnotationTool.none);
+  }
   void setColor(Color color) => state = state.copyWith(color: color);
   void setStrokeWidth(double width) => state = state.copyWith(strokeWidth: width);
   

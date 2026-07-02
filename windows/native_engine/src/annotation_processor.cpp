@@ -93,6 +93,7 @@ void AnnotationProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D1
     }
 
     d2d_context_->EndDraw();
+    d2d_context_->Flush();
     d2d_context_->SetTarget(nullptr);
 }
 
