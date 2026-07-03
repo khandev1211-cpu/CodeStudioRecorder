@@ -15,7 +15,16 @@ void Logger::setLogFile(const std::string& path) {
     if (file_stream_.is_open()) {
         file_stream_.close();
     }
-    file_stream_.open(path, std::ios::app);
+
+    // Ensure path is valid and attempt to open
+    try {
+        file_stream_.open(path, std::ios::app);
+        if (!file_stream_.is_open()) {
+            std::cerr << "LOGGER: Failed to open log file: " << path << std::endl;
+        }
+    } catch (...) {
+        std::cerr << "LOGGER: Exception opening log file" << std::endl;
+    }
 }
 
 void Logger::log(LogLevel level, const std::string& message) {

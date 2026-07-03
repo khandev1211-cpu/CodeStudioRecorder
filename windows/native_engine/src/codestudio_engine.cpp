@@ -37,8 +37,18 @@ public:
     }
 
     SessionManager() {
-        cs::Logger::instance().setLogFile("codestudio.log");
-        CS_LOG_INFO("Session Manager Initialized");
+        char* appData;
+        size_t len;
+        _dupenv_s(&appData, &len, "LOCALAPPDATA");
+        std::string logPath = "codestudio.log";
+        if (appData) {
+            logPath = std::string(appData) + "\\CodeStudioRecorder\\codestudio.log";
+            std::filesystem::create_directories(std::string(appData) + "\\CodeStudioRecorder");
+            free(appData);
+        }
+
+        cs::Logger::instance().setLogFile(logPath);
+        CS_LOG_INFO("Session Manager Initialized. Log: " + logPath);
     }
 
     int32_t beginSession(const cs::RecordingConfig& config) {

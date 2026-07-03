@@ -115,8 +115,8 @@ bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
     video_stream_ = avformat_new_stream(format_ctx_, nullptr);
     video_codec_ctx_ = avcodec_alloc_context3(codec);
 
-    video_codec_ctx_->width = config.width;
-    video_codec_ctx_->height = config.height;
+    video_codec_ctx_->width = (config.width % 2 == 0) ? config.width : config.width - 1;
+    video_codec_ctx_->height = (config.height % 2 == 0) ? config.height : config.height - 1;
     video_codec_ctx_->time_base = { 1, (int)config.fps };
     video_codec_ctx_->framerate = { (int)config.fps, 1 };
     video_codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -164,8 +164,8 @@ bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
     video_frame_->height = video_codec_ctx_->height;
     av_frame_get_buffer(video_frame_, 0);
 
-    sws_ctx_ = sws_getContext(config.width, config.height, AV_PIX_FMT_BGRA,
-                              config.width, config.height, AV_PIX_FMT_YUV420P,
+    sws_ctx_ = sws_getContext(video_codec_ctx_->width, video_codec_ctx_->height, AV_PIX_FMT_BGRA,
+                              video_codec_ctx_->width, video_codec_ctx_->height, AV_PIX_FMT_YUV420P,
                               SWS_BICUBIC, nullptr, nullptr, nullptr);
 
     return true;
@@ -195,8 +195,9 @@ bool FFmpegEncoder::initAudio(const RecordingConfig& config) {
     if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER)
         audio_codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-    if (avcodec_open2(audio_codec_ctx_, codec, nullptr) < 0) {
-        CS_LOG_ERR("Could not open audio codec");
+    ret = avcodec_open2(audio_codec_ctx_, codec, nullptr);
+    if (ret < 0) {
+        CS_LOG_ERR("Could not open audio codec: " + get_ffmpeg_error(ret));
         return false;
     }
 
