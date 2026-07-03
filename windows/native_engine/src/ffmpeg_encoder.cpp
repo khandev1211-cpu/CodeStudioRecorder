@@ -10,12 +10,21 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/opt.h>
+#include <libavutil/error.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
 }
 #endif
 
 namespace cs {
+
+#ifdef USE_REAL_FFMPEG
+std::string get_ffmpeg_error(int err) {
+    char buf[AV_ERROR_MAX_STRING_SIZE];
+    av_strerror(err, buf, sizeof(buf));
+    return std::string(buf);
+}
+#endif
 
 FFmpegEncoder::FFmpegEncoder() {}
 
@@ -28,31 +37,39 @@ bool FFmpegEncoder::initialize(const RecordingConfig& config) {
     std::lock_guard<std::mutex> lock(encoder_mutex_);
     CS_LOG_INFO("FFmpegEncoder: Initializing output: " + std::string(config.output_path));
 
-    avformat_alloc_output_context2(&format_ctx_, nullptr, nullptr, config.output_path);
-    if (!format_ctx_) {
-        CS_LOG_ERR("Could not create output context");
+    int ret = avformat_alloc_output_context2(&format_ctx_, nullptr, nullptr, config.output_path);
+    if (ret < 0 || !format_ctx_) {
+        CS_LOG_ERR("Could not create output context: " + get_ffmpeg_error(ret));
         return false;
     }
 
-    if (!initVideo(config)) return false;
-    if (!initAudio(config)) return false;
+    if (!initVideo(config)) {
+        CS_LOG_ERR("Video initialization failed");
+        return false;
+    }
+
+    if (!initAudio(config)) {
+        CS_LOG_ERR("Audio initialization failed");
+        return false;
+    }
 
     if (!(format_ctx_->oformat->flags & AVFMT_NOFILE)) {
-        if (avio_open(&format_ctx_->pb, config.output_path, AVIO_FLAG_WRITE) < 0) {
-            CS_LOG_ERR("Could not open output file");
+        ret = avio_open(&format_ctx_->pb, config.output_path, AVIO_FLAG_WRITE);
+        if (ret < 0) {
+            CS_LOG_ERR("Could not open output file '" + std::string(config.output_path) + "': " + get_ffmpeg_error(ret));
             return false;
         }
     }
 
-    if (avformat_write_header(format_ctx_, nullptr) < 0) {
-        CS_LOG_ERR("Error occurred when writing header");
+    ret = avformat_write_header(format_ctx_, nullptr);
+    if (ret < 0) {
+        CS_LOG_ERR("Error occurred when writing header: " + get_ffmpeg_error(ret));
         return false;
     }
 
     return true;
 #else
     CS_LOG_WARN("FFmpegEncoder: Built without real FFmpeg. Using MOCK mode.");
-    // Create a dummy file so the UI can "find" it
     FILE* f = fopen(config.output_path, "wb");
     if (f) {
         fprintf(f, "MOCK VIDEO DATA - Link FFmpeg to record real video.");
@@ -74,7 +91,6 @@ bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
     }
 
     if (!codec || (config.encoder_name && strcmp(config.encoder_name, "auto") == 0)) {
-        // Try hardware encoders in order of preference
         const char* hw_encoders[] = { "h264_nvenc", "h264_amf", "h264_qsv" };
         for (const char* name : hw_encoders) {
             const AVCodec* hw_codec = avcodec_find_encoder_by_name(name);
@@ -92,7 +108,7 @@ bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
     }
 
     if (!codec) {
-        CS_LOG_ERR("No H.264 encoder found");
+        CS_LOG_ERR("No H.264 encoder found at all");
         return false;
     }
 
@@ -112,9 +128,31 @@ bool FFmpegEncoder::initVideo(const RecordingConfig& config) {
     av_opt_set(video_codec_ctx_->priv_data, "preset", "ultrafast", 0);
     av_opt_set(video_codec_ctx_->priv_data, "tune",   "zerolatency", 0);
 
-    if (avcodec_open2(video_codec_ctx_, codec, nullptr) < 0) {
-        CS_LOG_ERR("Could not open video codec");
-        return false;
+    int ret = avcodec_open2(video_codec_ctx_, codec, nullptr);
+    if (ret < 0) {
+        CS_LOG_WARN("Could not open primary video codec: " + get_ffmpeg_error(ret) + ". Attempting software fallback.");
+
+        // Fallback to libx264 if hardware failed to open
+        if (codec->id != AV_CODEC_ID_H264 || strcmp(codec->name, "libx264") != 0) {
+            const AVCodec* sw_codec = avcodec_find_encoder_by_name("libx264");
+            if (sw_codec) {
+                avcodec_free_context(&video_codec_ctx_);
+                video_codec_ctx_ = avcodec_alloc_context3(sw_codec);
+                video_codec_ctx_->width = config.width;
+                video_codec_ctx_->height = config.height;
+                video_codec_ctx_->time_base = { 1, (int)config.fps };
+                video_codec_ctx_->framerate = { (int)config.fps, 1 };
+                video_codec_ctx_->pix_fmt = AV_PIX_FMT_YUV420P;
+                video_codec_ctx_->gop_size = 12;
+                av_opt_set(video_codec_ctx_->priv_data, "preset", "ultrafast", 0);
+                ret = avcodec_open2(video_codec_ctx_, sw_codec, nullptr);
+            }
+        }
+
+        if (ret < 0) {
+            CS_LOG_ERR("Could not open fallback video codec: " + get_ffmpeg_error(ret));
+            return false;
+        }
     }
 
     avcodec_parameters_from_context(video_stream_->codecpar, video_codec_ctx_);
