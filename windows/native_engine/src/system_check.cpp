@@ -58,27 +58,38 @@ bool SystemCheck::checkD3D11() {
 
 bool SystemCheck::checkFFmpeg() {
 #ifdef USE_REAL_FFMPEG
-    // Check for FFmpeg 6.x or 7.x DLLs
-    const char* libs7[] = { "avcodec-61.dll", "avformat-61.dll", "avutil-58.dll" };
+    // Check for FFmpeg 7.x DLLs
+    const char* libs7[] = { "avcodec-61.dll", "avformat-61.dll", "avutil-59.dll" };
+    // Check for FFmpeg 6.x DLLs
     const char* libs6[] = { "avcodec-60.dll", "avformat-60.dll", "avutil-58.dll" };
 
-    bool found7 = true;
-    for (const char* lib : libs7) {
-        HMODULE h = LoadLibraryA(lib);
-        if (!h) { found7 = false; break; }
-        FreeLibrary(h);
-    }
-    if (found7) return true;
+    auto tryLoad = [](const char* libs[], int count) {
+        for (int i = 0; i < count; i++) {
+            HMODULE h = LoadLibraryA(libs[i]);
+            if (!h) {
+                CS_LOG_WARN("SystemCheck: Failed to load " + std::string(libs[i]));
+                return false;
+            }
+            FreeLibrary(h);
+        }
+        return true;
+    };
 
-    bool found6 = true;
-    for (const char* lib : libs6) {
-        HMODULE h = LoadLibraryA(lib);
-        if (!h) { found6 = false; break; }
-        FreeLibrary(h);
+    if (tryLoad(libs7, 3)) {
+        CS_LOG_INFO("SystemCheck: FFmpeg 7.x detected");
+        return true;
     }
-    return found6;
+
+    if (tryLoad(libs6, 3)) {
+        CS_LOG_INFO("SystemCheck: FFmpeg 6.x detected");
+        return true;
+    }
+
+    CS_LOG_ERR("SystemCheck: No compatible FFmpeg libraries found");
+    return false;
 #else
-    return true; // Mock mode doesn't need them
+    CS_LOG_INFO("SystemCheck: Built in MOCK mode, skipping FFmpeg check");
+    return true;
 #endif
 }
 
