@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <filesystem>
 
 // Project headers
 #include "codestudio_engine.h"

@@ -195,7 +195,7 @@ bool FFmpegEncoder::initAudio(const RecordingConfig& config) {
     if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER)
         audio_codec_ctx_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
-    ret = avcodec_open2(audio_codec_ctx_, codec, nullptr);
+    int ret = avcodec_open2(audio_codec_ctx_, codec, nullptr);
     if (ret < 0) {
         CS_LOG_ERR("Could not open audio codec: " + get_ffmpeg_error(ret));
         return false;
