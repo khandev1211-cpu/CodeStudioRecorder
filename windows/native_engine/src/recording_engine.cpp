@@ -15,6 +15,7 @@
 #include "zoom_processor.h"
 #include "webcam_processor.h"
 #include "plugin_manager.h"
+#include "overlay_manager.h"
 #include "cs_logger.h"
 #include "global_mouse_hook.h"
 
@@ -103,6 +104,9 @@ int32_t RecordingEngine::start(const RecordingConfig& config) {
 
     status_ = RecordingStatus::Recording;
 
+    OverlayManager::instance().start();
+    OverlayManager::instance().setHighlightEnabled(config.capture_cursor);
+
     noise_suppressor_->setEnabled(config.ai_noise_removal);
     caption_engine_->setEnabled(config.ai_auto_captions);
 
@@ -127,16 +131,25 @@ int32_t RecordingEngine::stop() {
         return 0;
     }
 
+    CS_LOG_INFO("Stop requested. Finalizing in background...");
     status_ = RecordingStatus::Flushing;
 
-    GlobalMouseHook::instance().stop();
+    // Run finalization in a background thread to prevent UI hang
+    std::thread([this]() {
+        OverlayManager::instance().stop();
+        GlobalMouseHook::instance().stop();
 
-    capturer_->stop();
-    mic_engine_->stop();
-    system_audio_engine_->stop();
-    encoder_->finalize();
+        capturer_->stop();
+        mic_engine_->stop();
+        system_audio_engine_->stop();
 
-    status_ = RecordingStatus::Completed;
+        status_ = RecordingStatus::Finalizing;
+        encoder_->finalize();
+
+        status_ = RecordingStatus::Completed;
+        CS_LOG_INFO("Recording session completed successfully");
+    }).detach();
+
     return 0;
 }
 
@@ -218,18 +231,23 @@ void RecordingEngine::addAnnotation(int32_t type, float x1, float y1, float x2, 
         shape.color = color;
         shape.stroke_width = width;
         annProc->addShape(shape);
+        OverlayManager::instance().updateAnnotations(annProc->getShapes());
     }
 }
 
 void RecordingEngine::clearAnnotations() {
     if (processors_.size() > 2) {
-        static_cast<AnnotationProcessor*>(processors_[2].get())->clear();
+        auto* annProc = static_cast<AnnotationProcessor*>(processors_[2].get());
+        annProc->clear();
+        OverlayManager::instance().updateAnnotations(annProc->getShapes());
     }
 }
 
 void RecordingEngine::undoAnnotation() {
     if (processors_.size() > 2) {
-        static_cast<AnnotationProcessor*>(processors_[2].get())->undo();
+        auto* annProc = static_cast<AnnotationProcessor*>(processors_[2].get());
+        annProc->undo();
+        OverlayManager::instance().updateAnnotations(annProc->getShapes());
     }
 }
 
@@ -269,6 +287,11 @@ std::vector<ChapterMarker> RecordingEngine::getMarkers() const {
 
 void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
     if (status_ == RecordingStatus::Recording) {
+        POINT p;
+        if (GetCursorPos(&p)) {
+            OverlayManager::instance().updateCursorPosition((float)p.x, (float)p.y);
+        }
+
         // Copy capture frame to a pool-managed texture that supports D2D drawing
         auto target_tex = texture_pool_->acquire(frame.width, frame.height, DXGI_FORMAT_B8G8R8A8_UNORM);
         if (!target_tex) return;

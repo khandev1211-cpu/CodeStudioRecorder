@@ -319,7 +319,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     if (recordingState.status == RecordingStatus.completed)
                       const Padding(
                         padding: EdgeInsets.only(top: 20),
-                        child: Text('Recording saved successfully!'),
+                        child: Text('Recording saved successfully!', style: TextStyle(color: Colors.greenAccent)),
+                      ),
+                    if (recordingState.status == RecordingStatus.finalizing || recordingState.status == RecordingStatus.flushing)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 20),
+                        child: Column(
+                          children: [
+                            CircularProgressIndicator(strokeWidth: 2),
+                            SizedBox(height: 8),
+                            Text('Finalizing video file...', style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
                       ),
                   ],
                 ),

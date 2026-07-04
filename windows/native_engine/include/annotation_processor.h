@@ -39,6 +39,7 @@ public:
     void addShape(const AnnotationShape& shape);
     void clear();
     void undo();
+    std::vector<AnnotationShape> getShapes();
 
 private:
     void initializeD2D(ID3D11Device* device);

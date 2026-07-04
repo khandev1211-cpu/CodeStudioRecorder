@@ -35,6 +35,11 @@ void AnnotationProcessor::undo() {
     if (!shapes_.empty()) shapes_.pop_back();
 }
 
+std::vector<AnnotationShape> AnnotationProcessor::getShapes() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return shapes_;
+}
+
 void AnnotationProcessor::process(VideoFrame& frame, ID3D11Device* device, ID3D11DeviceContext* context) {
     if (!enabled_ || !frame.data) return;
 
