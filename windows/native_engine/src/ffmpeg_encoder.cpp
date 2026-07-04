@@ -4,6 +4,8 @@
 #include <vector>
 #include <d3d11.h>
 
+#include <filesystem>
+
 #ifdef USE_REAL_FFMPEG
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -54,6 +56,16 @@ bool FFmpegEncoder::initialize(const RecordingConfig& config) {
     }
 
     if (!(format_ctx_->oformat->flags & AVFMT_NOFILE)) {
+        // Ensure parent directory exists
+        try {
+            std::filesystem::path p(config.output_path);
+            if (p.has_parent_path()) {
+                std::filesystem::create_directories(p.parent_path());
+            }
+        } catch (...) {
+            CS_LOG_WARN("Failed to verify/create output directory for: " + std::string(config.output_path));
+        }
+
         ret = avio_open(&format_ctx_->pb, config.output_path, AVIO_FLAG_WRITE);
         if (ret < 0) {
             CS_LOG_ERR("Could not open output file '" + std::string(config.output_path) + "': " + get_ffmpeg_error(ret));
