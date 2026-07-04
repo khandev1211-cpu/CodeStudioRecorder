@@ -14,8 +14,21 @@
 #include <chrono>
 #include <vector>
 #include <string>
+#include <queue>
+#include <condition_variable>
+#include <thread>
 
 namespace cs {
+
+struct EncoderTask {
+    enum class Type { Video, Audio, Finalize };
+    Type type;
+    VideoFrame video_frame;
+    std::vector<float> audio_samples;
+    uint32_t channels;
+    uint32_t sample_rate;
+    int64_t timestamp;
+};
 
 class RecordingEngine {
 public:
@@ -55,6 +68,15 @@ private:
     std::unique_ptr<AISilenceDetector> silence_detector_;
     std::unique_ptr<CaptionEngine> caption_engine_;
     std::unique_ptr<TexturePool> texture_pool_;
+
+    // Threading for encoding
+    std::thread worker_thread_;
+    std::queue<EncoderTask> task_queue_;
+    std::mutex queue_mutex_;
+    std::condition_variable cv_;
+    std::atomic<bool> worker_running_{ false };
+    void workerLoop();
+    void pushTask(EncoderTask&& task);
 
     struct MarkerInternal {
         int64_t timestamp_ms;

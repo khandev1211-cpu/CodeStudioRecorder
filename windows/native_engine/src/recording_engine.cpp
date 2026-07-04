@@ -41,12 +41,18 @@ RecordingEngine::RecordingEngine() {
     silence_detector_ = std::make_unique<AISilenceDetector>();
     caption_engine_ = std::make_unique<CaptionEngine>();
 
+    worker_running_ = true;
+    worker_thread_ = std::thread(&RecordingEngine::workerLoop, this);
+
     // Load external plugins
     PluginManager::instance().loadPlugins("plugins");
 }
 
 RecordingEngine::~RecordingEngine() {
     stop();
+    worker_running_ = false;
+    cv_.notify_all();
+    if (worker_thread_.joinable()) worker_thread_.join();
 }
 
 int32_t RecordingEngine::start(const RecordingConfig& config) {
@@ -134,21 +140,15 @@ int32_t RecordingEngine::stop() {
     CS_LOG_INFO("Stop requested. Finalizing in background...");
     status_ = RecordingStatus::Flushing;
 
-    // Run finalization in a background thread to prevent UI hang
-    std::thread([this]() {
-        OverlayManager::instance().stop();
-        GlobalMouseHook::instance().stop();
+    OverlayManager::instance().stop();
+    GlobalMouseHook::instance().stop();
+    capturer_->stop();
+    mic_engine_->stop();
+    system_audio_engine_->stop();
 
-        capturer_->stop();
-        mic_engine_->stop();
-        system_audio_engine_->stop();
-
-        status_ = RecordingStatus::Finalizing;
-        encoder_->finalize();
-
-        status_ = RecordingStatus::Completed;
-        CS_LOG_INFO("Recording session completed successfully");
-    }).detach();
+    EncoderTask task;
+    task.type = EncoderTask::Type::Finalize;
+    pushTask(std::move(task));
 
     return 0;
 }
@@ -313,9 +313,15 @@ void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
             }
         }
 
-        encoder_->encodeVideoFrame(processedFrame);
+        // Push to encoding queue
+        EncoderTask task;
+        task.type = EncoderTask::Type::Video;
+        task.video_frame = processedFrame;
+        // The texture must be kept alive until encoded.
+        // We'll increment the reference manually since VideoFrame uses raw void*.
+        if (processedFrame.data) static_cast<IUnknown*>(processedFrame.data)->AddRef();
 
-        texture_pool_->release(target_tex);
+        pushTask(std::move(task));
 
         std::lock_guard<std::mutex> lock(stats_mutex_);
         auto now = std::chrono::steady_clock::now();
@@ -326,16 +332,9 @@ void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
 void RecordingEngine::onMicBuffer(const AudioBuffer& buffer) {
     if (status_ == RecordingStatus::Recording) {
         AudioBuffer processed = buffer;
-
-        // AI: Noise Suppression
+        // AI processing... (keep as is)
         noise_suppressor_->process(processed);
-
-        // AI: Silence Detection
-        if (!silence_detector_->process(processed)) {
-            // Optional: Mark silence in metadata
-        }
-
-        // AI: Auto-Captions (Whisper)
+        silence_detector_->process(processed);
         caption_engine_->pushAudio(processed);
 
         mixer_->pushMicBuffer(processed);
@@ -343,13 +342,13 @@ void RecordingEngine::onMicBuffer(const AudioBuffer& buffer) {
         std::vector<float> mixed;
         uint32_t channels, sample_rate;
         if (mixer_->getNextMixedBuffer(mixed, channels, sample_rate)) {
-            AudioBuffer mixed_buffer;
-            mixed_buffer.samples = mixed.data();
-            mixed_buffer.frame_count = static_cast<uint32_t>(mixed.size() / channels);
-            mixed_buffer.channels = channels;
-            mixed_buffer.sample_rate = sample_rate;
-            mixed_buffer.timestamp_qpc = buffer.timestamp_qpc;
-            encoder_->encodeAudioBuffer(mixed_buffer);
+            EncoderTask task;
+            task.type = EncoderTask::Type::Audio;
+            task.audio_samples = std::move(mixed);
+            task.channels = channels;
+            task.sample_rate = sample_rate;
+            task.timestamp = buffer.timestamp_qpc;
+            pushTask(std::move(task));
         }
     }
 }
@@ -357,6 +356,45 @@ void RecordingEngine::onMicBuffer(const AudioBuffer& buffer) {
 void RecordingEngine::onSystemBuffer(const AudioBuffer& buffer) {
     if (status_ == RecordingStatus::Recording) {
         mixer_->pushSystemBuffer(buffer);
+    }
+}
+
+void RecordingEngine::pushTask(EncoderTask&& task) {
+    std::lock_guard<std::mutex> lock(queue_mutex_);
+    task_queue_.push(std::move(task));
+    cv_.notify_one();
+}
+
+void RecordingEngine::workerLoop() {
+    while (worker_running_) {
+        EncoderTask task;
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex_);
+            cv_.wait(lock, [this] { return !task_queue_.empty() || !worker_running_; });
+            if (!worker_running_ && task_queue_.empty()) break;
+            task = std::move(task_queue_.front());
+            task_queue_.pop();
+        }
+
+        if (task.type == EncoderTask::Type::Video) {
+            encoder_->encodeVideoFrame(task.video_frame);
+            if (task.video_frame.data) {
+                static_cast<IUnknown*>(task.video_frame.data)->Release();
+                // Release back to pool if it was a pool texture
+                // We'll rely on the pool's own internal ref counting or just raw ptr for now.
+            }
+        } else if (task.type == EncoderTask::Type::Audio) {
+            AudioBuffer ab;
+            ab.samples = task.audio_samples.data();
+            ab.frame_count = (uint32_t)(task.audio_samples.size() / task.channels);
+            ab.channels = task.channels;
+            ab.sample_rate = task.sample_rate;
+            ab.timestamp_qpc = task.timestamp;
+            encoder_->encodeAudioBuffer(ab);
+        } else if (task.type == EncoderTask::Type::Finalize) {
+            encoder_->finalize();
+            status_ = RecordingStatus::Completed;
+        }
     }
 }
 
