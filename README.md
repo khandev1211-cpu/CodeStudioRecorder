@@ -69,6 +69,11 @@ CodeStudio uses a strict **Layered Architecture** to ensure UI responsiveness an
 2. **Install**: Run the installer. It will handle system checks and configure the environment.
 3. **Launch**: Open from your Start Menu. The app will perform a quick integrity check on first run.
 
+### 🛡️ Windows Security Notice
+Because CodeStudio uses high-performance system hooks for features like **Visual Clicks** and **Smart Zoom**, Windows Security may flag it as "Unknown" or suspicious.
+- **Why?**: The app tracks mouse clicks system-wide to draw ripple animations and uses the Graphics Capture API.
+- **Fix**: Click **"More info"** -> **"Run anyway"**. For a permanent fix, we are working on acquiring a digital code-signing certificate.
+
 ### Prerequisites (Development)
 - **Flutter SDK** (^3.4.0)
 - **Visual Studio 2022** (with "Desktop development with C++" workload)

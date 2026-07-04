@@ -72,6 +72,11 @@ bool FFmpegEncoder::initialize(const RecordingConfig& config) {
         }
     }
 
+    if (format_ctx_->nb_streams == 0) {
+        CS_LOG_ERR("No streams added to format context");
+        return false;
+    }
+
     ret = avformat_write_header(format_ctx_, nullptr);
     if (ret < 0) {
         CS_LOG_ERR("Error occurred when writing header: " + get_ffmpeg_error(ret));

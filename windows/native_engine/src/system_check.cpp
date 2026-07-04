@@ -31,6 +31,13 @@ std::vector<SystemRequirement> SystemCheck::runFullCheck() {
         "FFmpeg DLLs required for video encoding"
     });
 
+    // 4. Permission Check
+    results.push_back({
+        "Storage Access",
+        checkPermissions(),
+        "Ability to write recording files to disk"
+    });
+
     return results;
 }
 
@@ -91,6 +98,32 @@ bool SystemCheck::checkFFmpeg() {
     CS_LOG_INFO("SystemCheck: Built in MOCK mode, skipping FFmpeg check");
     return true;
 #endif
+}
+
+bool SystemCheck::checkPermissions() {
+    char* userProfile;
+    size_t len;
+    _dupenv_s(&userProfile, &len, "USERPROFILE");
+    if (!userProfile) return false;
+
+    std::string testPath = std::string(userProfile) + "\\Videos\\CodeStudio\\test.tmp";
+    std::filesystem::path p(testPath);
+
+    try {
+        if (!std::filesystem::exists(p.parent_path())) {
+            std::filesystem::create_directories(p.parent_path());
+        }
+        std::ofstream testFile(testPath);
+        if (testFile.is_open()) {
+            testFile.close();
+            std::filesystem::remove(testPath);
+            free(userProfile);
+            return true;
+        }
+    } catch (...) {}
+
+    if (userProfile) free(userProfile);
+    return false;
 }
 
 } // namespace cs
