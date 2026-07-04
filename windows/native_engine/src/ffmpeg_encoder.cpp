@@ -77,11 +77,17 @@ bool FFmpegEncoder::initialize(const RecordingConfig& config) {
         return false;
     }
 
-    ret = avformat_write_header(format_ctx_, nullptr);
+    // Optimization for MP4: move index to start of file
+    AVDictionary* options = nullptr;
+    av_dict_set(&options, "movflags", "faststart", 0);
+
+    ret = avformat_write_header(format_ctx_, &options);
     if (ret < 0) {
         CS_LOG_ERR("Error occurred when writing header: " + get_ffmpeg_error(ret));
+        av_dict_free(&options);
         return false;
     }
+    av_dict_free(&options);
 
     return true;
 #else
@@ -283,13 +289,16 @@ void FFmpegEncoder::encodeVideoFrame(const VideoFrame& frame) {
         video_frame_->pts = video_pts_++;
 
         AVPacket* pkt = av_packet_alloc();
-        if (avcodec_send_frame(video_codec_ctx_, video_frame_) >= 0) {
+        int send_ret = avcodec_send_frame(video_codec_ctx_, video_frame_);
+        if (send_ret >= 0) {
             while (avcodec_receive_packet(video_codec_ctx_, pkt) == 0) {
                 av_packet_rescale_ts(pkt, video_codec_ctx_->time_base, video_stream_->time_base);
                 pkt->stream_index = video_stream_->index;
                 av_interleaved_write_frame(format_ctx_, pkt);
                 av_packet_unref(pkt);
             }
+        } else {
+            CS_LOG_ERR("Video encoding failed: " + get_ffmpeg_error(send_ret));
         }
         av_packet_free(&pkt);
 
