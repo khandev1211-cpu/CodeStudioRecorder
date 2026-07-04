@@ -134,24 +134,15 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
   }
 
   Future<void> stop() async {
+    state = state.copyWith(lastError: null);
     final result = _service.stop();
-    _statsTimer?.cancel();
     
-    if (result == 0) {
-      if (_lastOutputPath != null) {
-        _historyService.saveRecording(Recording(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: p.basename(_lastOutputPath!),
-          filePath: _lastOutputPath!,
-          duration: state.elapsedTime,
-          createdAt: DateTime.now(),
-          fileSize: 0,
-        ));
-      }
-      state = state.copyWith(status: RecordingStatus.completed);
-    } else {
+    if (result != 0) {
       state = state.copyWith(status: RecordingStatus.error, lastError: "Failed to stop properly.");
+      _statsTimer?.cancel();
     }
+    // Note: We don't set status: completed or save history here anymore.
+    // The _startStatsPolling timer will detect when the engine sets status to completed.
   }
 
   void _startStatsPolling() {
@@ -161,6 +152,20 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
       final status = _service.status;
       final levels = _service.getAudioLevels();
       final caption = _service.getNextCaption();
+
+      // Detect transition to completed
+      if (status == RecordingStatus.completed && state.status != RecordingStatus.completed) {
+        if (_lastOutputPath != null) {
+          _historyService.saveRecording(Recording(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: p.basename(_lastOutputPath!),
+            filePath: _lastOutputPath!,
+            duration: Duration(milliseconds: stats.elapsedMs),
+            createdAt: DateTime.now(),
+            fileSize: 0,
+          ));
+        }
+      }
 
       state = state.copyWith(
         stats: stats,

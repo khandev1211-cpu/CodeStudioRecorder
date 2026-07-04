@@ -137,15 +137,10 @@ int32_t RecordingEngine::stop() {
         return 0;
     }
 
-    CS_LOG_INFO("Stop requested. Finalizing in background...");
+    CS_LOG_INFO("Stop requested. Setting status to Flushing...");
     status_ = RecordingStatus::Flushing;
 
-    OverlayManager::instance().stop();
-    GlobalMouseHook::instance().stop();
-    capturer_->stop();
-    mic_engine_->stop();
-    system_audio_engine_->stop();
-
+    // Trigger background finalization
     EncoderTask task;
     task.type = EncoderTask::Type::Finalize;
     pushTask(std::move(task));
@@ -392,8 +387,19 @@ void RecordingEngine::workerLoop() {
             ab.timestamp_qpc = task.timestamp;
             encoder_->encodeAudioBuffer(ab);
         } else if (task.type == EncoderTask::Type::Finalize) {
+            CS_LOG_INFO("Worker: Starting finalization sequence...");
+
+            OverlayManager::instance().stop();
+            GlobalMouseHook::instance().stop();
+            capturer_->stop();
+            mic_engine_->stop();
+            system_audio_engine_->stop();
+
+            status_ = RecordingStatus::Finalizing;
             encoder_->finalize();
+
             status_ = RecordingStatus::Completed;
+            CS_LOG_INFO("Worker: Finalization complete.");
         }
     }
 }
