@@ -1,121 +1,72 @@
 # CodeStudio Recorder 🎥
 
-**CodeStudio Recorder** is a high-performance, professional-grade screen recording platform for Windows. Built with a modern **Flutter** frontend and a specialized **C++20 Native Engine**, it is designed for creators, developers, and educators who need low-latency, high-fidelity captures with real-time visual and AI-driven effects.
+**CodeStudio Recorder** is a high-performance, professional-grade screen recording platform for Windows. Built with a modern **Flutter** frontend and a specialized **C++20 Native Engine**, it is designed for creators, developers, and educators who need low-latency captures with real-time AI-driven effects.
 
 ![Build Status](https://github.com/khandev1211-cpu/CodeStudioRecorder/actions/workflows/release.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-blue.svg)
-![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)
-![C++](https://img.shields.io/badge/C++-20-00599C?logo=c%2B%2B)
 
 ---
 
-## 🚀 Project Status: Phase 4 (AI Augmented)
-The project has evolved into **Phase 4: AI Augmented Production**. We have successfully integrated local AI models for audio and video enhancement, alongside a robust plugin architecture.
+## 🚀 Project Status: Phase 5 (Live Production Ready)
+The project has achieved **Production Stability** with a focus on real-time visual feedback and reliable hardware encoding.
 
-- [x] **Real-time Cursor Highlighting** (Direct2D)
-- [x] **Expanding Click Animations** (Direct2D + Global Hook)
-- [x] **Smart Zoom** (Smoothed cursor tracking)
-- [x] **Webcam PiP** (Media Foundation integration)
-- [x] **Audio Visualization** (Real-time peak meters)
-- [x] **Hardware-specific Encoding** (NVENC, AMF, QSV)
-- [x] **C++ Plugin SDK** (Extensible frame processors)
-- [x] **AI Noise Removal** (Real-time audio cleaning)
-- [x] **AI Auto-Captions** (Local Whisper integration)
-- [x] **AI Silence Detection** (Energy-based VAD)
-- [x] **System Integrity** (Pre-flight requirement checks)
+- [x] **Native Transparent Overlay** (Live visual feedback for drawings/highlights)
+- [x] **Stable H.264 Pipeline** (Even-dimension correction & auto-directory creation)
+- [x] **Non-Blocking Finalization** (Background thread encoding to prevent UI hangs)
+- [x] **System Integrity Suite** (Pre-flight requirement & permission diagnostics)
+- [x] **Real-time Cursor Highlighting** (Direct2D Focus)
+- [x] **Expanding Click Animations** (Global Hook Integration)
+- [x] **Smart Zoom** (Smoothed follow-cam following cursor)
+- [x] **Webcam PiP** (Hardware-accelerated Media Foundation feed)
+- [x] **Hardware Encoding** (Auto-detection & fallback for NVENC, AMF, QSV)
+- [x] **AI Foundation** (Noise gate, Silence detection, and Caption streaming bridge)
 
 ---
 
 ## ✨ Key Features
 
+### 🖼️ Real-Time Presentation HUD
+Unlike standard recorders, CodeStudio creates a native transparent overlay. You can see your annotations, cursor highlights, and zoom effects **live** on your screen as you record them, ensuring perfect delivery every time.
+
+### 🤖 AI-Augmented Pipeline
+- **Auto-Captions**: Real-time speech-to-text architecture with UI streaming support.
+- **Silence Detection**: Energy-based VAD to automatically detect "dead air".
+- **Noise Suppression**: Soft-gate filtering to clean microphone input in real-time.
+
 ### 🔥 Pro-Grade Performance
-- **WGC Capture**: Native integration with the Windows Graphics Capture API for 60FPS+ capture.
-- **Hardware Accelerated**: Optimized paths for **NVENC** (NVIDIA), **QuickSync** (Intel), and **AMF** (AMD).
-- **Zero-Copy Pipeline**: Ultra-efficient frame transfer using GPU texture pools.
-- **Pro Audio**: Multi-device support via **WASAPI** with real-time level monitoring.
-
-### 🤖 AI-Native Pipeline
-- **Local Whisper Captions**: Real-time speech-to-text generated locally on your machine.
-- **Smart Zoom**: Professional follow-cam logic that smoothly tracks your workspace.
-- **Noise Suppression**: AI-driven audio cleaning to remove fans and background hum.
-
-### 🧩 Extensibility & Tools
-- **Plugin SDK**: Build custom overlays and effects in C++ and load them as DLLs.
-- **Profile Management**: Save custom configurations for different recording scenarios.
-- **Annotation Suite**: Draw directly on the screen during recording (lines, arrows, shapes).
+- **Zero-Copy Capturing**: Direct integration with Windows Graphics Capture.
+- **Texture Pool**: Pre-allocated GPU buffers for zero-latency frame processing.
+- **Multi-Device Audio**: Mix system loopback and professional XLR microphones via WASAPI with real-time level visualizers.
 
 ---
 
 ## 🏗 System Architecture
 
-CodeStudio uses a strict **Layered Architecture** to ensure UI responsiveness and engine stability:
-
-1.  **Flutter UI Layer**: A reactive Material 3 interface managed by **Riverpod**.
-2.  **FFI Bridge**: A high-performance type-safe bridge using **dart:ffi**.
-3.  **Native Engine (C++20)**:
-    *   **CaptureEngine**: WinRT-based frame acquisition.
-    *   **AudioEngine**: WASAPI session management and mixing.
-    *   **AIProcessor**: Local inference for VAD, Noise, and Captions.
-    *   **PluginManager**: Dynamic DLL loader for external processors.
-    *   **EncodingEngine**: FFmpeg-based hardware stream orchestration.
+1.  **Flutter Layer**: Material 3 UI with **Riverpod** state management.
+2.  **FFI Bridge**: High-speed binary communication between Dart and C++.
+3.  **Native Engine (C++20)**: 
+    *   `OverlayManager`: Handles the top-most transparent drawing canvas.
+    *   `FFmpegEncoder`: Orchestrates hardware streams and MP4 containerization.
+    *   `TexturePool`: Manages writable GPU buffers for real-time effects.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Users)
 
 ### Installation
-1. **Download**: Grab the latest `CodeStudioRecorder_Setup.exe` from the [Releases](https://github.com/khandev1211-cpu/CodeStudioRecorder/releases) page.
-2. **Install**: Run the installer. It will handle system checks and configure the environment.
-3. **Launch**: Open from your Start Menu. The app will perform a quick integrity check on first run.
-
-### 🛡️ Windows Security Notice
-Because CodeStudio uses high-performance system hooks for features like **Visual Clicks** and **Smart Zoom**, Windows Security may flag it as "Unknown" or suspicious.
-- **Why?**: The app tracks mouse clicks system-wide to draw ripple animations and uses the Graphics Capture API.
-- **Fix**: Click **"More info"** -> **"Run anyway"**. For a permanent fix, we are working on acquiring a digital code-signing certificate.
-
-### Prerequisites (Development)
-- **Flutter SDK** (^3.4.0)
-- **Visual Studio 2022** (with "Desktop development with C++" workload)
-- **Windows 10 1903+** (Required for WGC support)
-
-### Development Build
-```bash
-git clone https://github.com/khandev1211-cpu/CodeStudioRecorder.git
-cd CodeStudioRecorder
-flutter pub get
-flutter run -d windows
-```
-
----
-
-## 📚 Documentation
-
-### 1. Project Structure
-- **`lib/`**: Flutter frontend implementation (Feature-first architecture).
-- **`windows/native_engine/`**: High-performance C++20 backend.
-    - `src/`: Core implementation (Capture, Audio, AI, Encoding).
-    - `include/`: FFI headers and Plugin SDK interfaces.
-- **`docs/`**: Detailed technical guides for each module.
-
-### 2. Building from Source
-#### Native Engine (C++)
-The engine is built automatically by Flutter, but can be built manually via CMake:
-```bash
-cd windows
-cmake -B build
-cmake --build build --config Release
-```
+1. **Download**: Get the latest `CodeStudioRecorder_Setup.exe` from [Releases](https://github.com/khandev1211-cpu/CodeStudioRecorder/releases).
+2. **Setup**: The installer handles FFmpeg dependencies, license agreements, and system paths.
+3. **Launch**: The app verifies DirectX 11 and Storage permissions on first run.
 
 ---
 
 ## 🗺 Roadmap
 
-- **Phase 1 (MVP)**: Core capture and history management. (STABLE)
-- **Phase 2 (Creator Tools)**: Cursor effects and Smart Zoom. (STABLE)
-- **Phase 3 (Extensibility)**: C++ Plugin SDK and Webcam support. (STABLE)
-- **Phase 4 (AI Features)**: Local Whisper captions and Noise removal. (STABLE)
-- **Phase 5 (Post-Production)**: In-app editor and AI-driven highlight clipping. (UPCOMING)
+- **Phase 1-3**: Core, Creator Tools, and Extensibility. (COMPLETE)
+- **Phase 4**: AI Foundations (Noise, Silence, Captions). (STABLE)
+- **Phase 5**: Live Presentation & Performance. (STABLE)
+- **Phase 6**: Local AI Inference (Whisper/RNNoise ONNX integration) & In-App Trimming. (UPCOMING)
 
 ---
 
