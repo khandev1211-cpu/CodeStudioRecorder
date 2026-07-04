@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <d3d11.h>
-
 #include <filesystem>
 
 #ifdef USE_REAL_FFMPEG

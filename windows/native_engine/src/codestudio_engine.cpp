@@ -43,8 +43,11 @@ public:
         _dupenv_s(&appData, &len, "LOCALAPPDATA");
         std::string logPath = "codestudio.log";
         if (appData) {
-            logPath = std::string(appData) + "\\CodeStudioRecorder\\codestudio.log";
-            std::filesystem::create_directories(std::string(appData) + "\\CodeStudioRecorder");
+            std::string dirPath = std::string(appData) + "\\CodeStudioRecorder";
+            logPath = dirPath + "\\codestudio.log";
+            try {
+                std::filesystem::create_directories(std::filesystem::path(dirPath));
+            } catch (...) {}
             free(appData);
         }
 

@@ -3,7 +3,7 @@
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "Khandev"
 #define MyAppURL "https://github.com/khandev1211-cpu/CodeStudioRecorder"
-#define MyAppExeName "CodeStudioRecorder.exe"
+#define MyAppExeName "codestudio_recorder.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -35,8 +35,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Flutter Build Output
-Source: "build\windows\x64\runner\Release\CodeStudioRecorder.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "CodeStudioRecorder.exe"
+Source: "build\windows\x64\runner\Release\codestudio_recorder.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs; Excludes: "codestudio_recorder.exe"
 ; Native DLL
 Source: "build\windows\x64\native_engine\Release\codestudio_engine.dll"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 ; FFmpeg DLLs
