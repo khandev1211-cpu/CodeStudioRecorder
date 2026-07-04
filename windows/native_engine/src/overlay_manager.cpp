@@ -66,7 +66,7 @@ void OverlayManager::renderLoop() {
 
     // 2. Initialize D2D
     D2D1_FACTORY_OPTIONS options = {};
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &options, d2d_factory_.GetAddressOf());
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &options, reinterpret_cast<void**>(d2d_factory_.GetAddressOf()));
 
     d2d_factory_->CreateHwndRenderTarget(
         D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)),
