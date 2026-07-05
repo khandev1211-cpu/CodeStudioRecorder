@@ -7,7 +7,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
 
-set(FFMPEG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/ffmpeg")
+# Support relative or absolute paths
+if(NOT DEFINED FFMPEG_DIR)
+    set(FFMPEG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/ffmpeg")
+endif()
+
+# Fallback check for GitHub Actions path
+if(NOT EXISTS "${FFMPEG_DIR}/include/libavcodec/avcodec.h")
+    set(FFMPEG_DIR "${CMAKE_SOURCE_DIR}/../third_party/ffmpeg")
+endif()
+
 if(EXISTS "${FFMPEG_DIR}/include/libavcodec/avcodec.h")
     message(STATUS "FFmpeg headers found. Building with real encoder.")
     add_definitions(-DUSE_REAL_FFMPEG)

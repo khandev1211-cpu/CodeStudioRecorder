@@ -66,11 +66,16 @@ void OverlayManager::renderLoop() {
 
     // 2. Initialize D2D
     D2D1_FACTORY_OPTIONS options = {};
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &options, reinterpret_cast<void**>(d2d_factory_.GetAddressOf()));
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, reinterpret_cast<void**>(d2d_factory_.GetAddressOf()));
+
+    // Create a render target for the window
+    RECT rc;
+    GetClientRect(hwnd_, &rc);
+    D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
 
     d2d_factory_->CreateHwndRenderTarget(
         D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-        D2D1::HwndRenderTargetProperties(hwnd_, D2D1::SizeU(screenWidth, screenHeight)),
+        D2D1::HwndRenderTargetProperties(hwnd_, size),
         &render_target_
     );
 
@@ -78,7 +83,12 @@ void OverlayManager::renderLoop() {
     render_target_->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Yellow, 0.4f), &highlight_brush_);
 
     // 3. Main Loop
+    MSG msg = {};
     while (running_) {
+        while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
         render();
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60fps
     }

@@ -59,6 +59,8 @@ Unlike standard recorders, CodeStudio creates a native transparent overlay. You 
 2. **Setup**: The installer handles FFmpeg dependencies, license agreements, and system paths.
 3. **Launch**: The app verifies DirectX 11 and Storage permissions on first run.
 
+> **Note on Custom Logo**: To use your own branded icon for the application executable and taskbar, replace the file `windows/runner/resources/app_icon.ico` with your own `.ico` file before building or installing.
+
 ---
 
 ## 🗺 Roadmap
