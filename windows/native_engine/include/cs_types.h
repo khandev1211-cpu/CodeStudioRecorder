@@ -23,6 +23,7 @@ struct RecordingConfig {
     bool capture_cursor;
     bool capture_audio;
     int64_t target_hwnd; // 0 for full screen
+    int64_t monitor_handle; // 0 for default/primary
     const char* encoder_name; // e.g. "h264_nvenc", "libx264"
     const char* mic_device_id;
     const char* sys_audio_device_id;
@@ -49,6 +50,15 @@ struct AudioDeviceInfo {
     const char* id;
     const char* name;
     bool is_default;
+};
+
+struct MonitorInfo {
+    int32_t index;
+    const char* name;
+    int32_t width;
+    int32_t height;
+    bool is_primary;
+    int64_t handle;
 };
 
 } // namespace cs

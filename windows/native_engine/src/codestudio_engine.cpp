@@ -227,6 +227,32 @@ CSE_API void cse_enumerate_webcams(WebcamCallback callback) {
     }
 }
 
+BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
+    MonitorCallback callback = reinterpret_cast<MonitorCallback>(dwData);
+
+    MONITORINFOEXW info;
+    info.cbSize = sizeof(info);
+    if (GetMonitorInfoW(hMonitor, &info)) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+        std::string name = converter.to_bytes(info.szDevice);
+
+        NativeMonitorInfo nmi;
+        nmi.handle = reinterpret_cast<int64_t>(hMonitor);
+        nmi.name = name.c_str();
+        nmi.width = info.rcMonitor.right - info.rcMonitor.left;
+        nmi.height = info.rcMonitor.bottom - info.rcMonitor.top;
+        nmi.is_primary = (info.dwFlags & MONITORINFOF_PRIMARY) != 0;
+        nmi.index = 0; // Indexing could be added if needed
+
+        callback(&nmi);
+    }
+    return TRUE;
+}
+
+CSE_API void cse_enumerate_monitors(MonitorCallback callback) {
+    EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, reinterpret_cast<LPARAM>(callback));
+}
+
 CSE_API void cse_set_setting_string(const char* key, const char* value) {
     cs::SettingsManager::instance().setString(key, value);
     cs::SettingsManager::instance().save();

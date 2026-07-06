@@ -29,6 +29,8 @@ final class NativeRecordingConfig extends Struct {
   external bool captureAudio;
   @Int64()
   external int targetHwnd;
+  @Int64()
+  external int monitorHandle;
   external Pointer<Utf8> encoderName;
   external Pointer<Utf8> micDeviceId;
   external Pointer<Utf8> sysAudioDeviceId;
@@ -66,4 +68,18 @@ final class NativeAudioDeviceInfo extends Struct {
 final class NativeWebcamDeviceInfo extends Struct {
   external Pointer<Utf8> id;
   external Pointer<Utf8> name;
+}
+
+final class NativeMonitorInfo extends Struct {
+  @Int32()
+  external int index;
+  external Pointer<Utf8> name;
+  @Int32()
+  external int width;
+  @Int32()
+  external int height;
+  @Bool()
+  external bool isPrimary;
+  @Int64()
+  external int handle;
 }

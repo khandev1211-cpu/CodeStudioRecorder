@@ -24,6 +24,15 @@ struct NativeWebcamDeviceInfo {
     const char* name;
 };
 
+struct NativeMonitorInfo {
+    int32_t index;
+    const char* name;
+    int32_t width;
+    int32_t height;
+    bool is_primary;
+    int64_t handle;
+};
+
 // Forward declaration of cs::RecordingConfig to avoid including heavy headers here
 namespace cs { struct RecordingConfig; struct RecordingStats; }
 
@@ -44,6 +53,9 @@ CSE_API void cse_enumerate_audio_devices(bool capture, AudioDeviceCallback callb
 
 typedef void (*WebcamCallback)(NativeWebcamDeviceInfo*);
 CSE_API void cse_enumerate_webcams(WebcamCallback callback);
+
+typedef void (*MonitorCallback)(NativeMonitorInfo*);
+CSE_API void cse_enumerate_monitors(MonitorCallback callback);
 
 CSE_API void cse_set_setting_string(const char* key, const char* value);
 CSE_API const char* cse_get_setting_string(const char* key, const char* default_value);

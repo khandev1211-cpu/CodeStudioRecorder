@@ -4,6 +4,7 @@ class RecordingConfig {
   final int fps;
   final String outputPath;
   final int? targetHwnd;
+  final int? monitorHandle;
 
   RecordingConfig({
     this.width = 1920,
@@ -11,5 +12,6 @@ class RecordingConfig {
     this.fps = 60,
     required this.outputPath,
     this.targetHwnd,
+    this.monitorHandle,
   });
 }

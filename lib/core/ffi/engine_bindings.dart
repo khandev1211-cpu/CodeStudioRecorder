@@ -33,6 +33,10 @@ typedef WebcamCallbackNative = Void Function(Pointer<NativeWebcamDeviceInfo>);
 typedef EnumerateWebcamsNative = Void Function(Pointer<NativeFunction<WebcamCallbackNative>>);
 typedef EnumerateWebcamsDart = void Function(Pointer<NativeFunction<WebcamCallbackNative>>);
 
+typedef MonitorCallbackNative = Void Function(Pointer<NativeMonitorInfo>);
+typedef EnumerateMonitorsNative = Void Function(Pointer<NativeFunction<MonitorCallbackNative>>);
+typedef EnumerateMonitorsDart = void Function(Pointer<NativeFunction<MonitorCallbackNative>>);
+
 typedef SetSettingStringNative = Void Function(Pointer<Utf8>, Pointer<Utf8>);
 typedef SetSettingStringDart = void Function(Pointer<Utf8>, Pointer<Utf8>);
 
@@ -95,6 +99,7 @@ class EngineBindings {
   late final EnumerateWindowsDart enumerateWindows;
   late final EnumerateAudioDevicesDart enumerateAudioDevices;
   late final EnumerateWebcamsDart enumerateWebcams;
+  late final EnumerateMonitorsDart enumerateMonitors;
   
   late final SetSettingStringDart setSettingString;
   late final GetSettingStringDart getSettingString;
@@ -158,6 +163,9 @@ class EngineBindings {
         .asFunction();
     enumerateWebcams = _lib
         .lookup<NativeFunction<EnumerateWebcamsNative>>('cse_enumerate_webcams')
+        .asFunction();
+    enumerateMonitors = _lib
+        .lookup<NativeFunction<EnumerateMonitorsNative>>('cse_enumerate_monitors')
         .asFunction();
     setSettingString = _lib
         .lookup<NativeFunction<SetSettingStringNative>>('cse_set_setting_string')

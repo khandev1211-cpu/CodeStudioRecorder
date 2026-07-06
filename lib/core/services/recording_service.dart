@@ -10,6 +10,7 @@ final recordingServiceProvider = Provider((ref) => RecordingService());
 final List<({int hwnd, String title})> _tempWindowsList = [];
 final List<({String id, String name, bool isDefault})> _tempAudioList = [];
 final List<({String id, String name})> _tempWebcamList = [];
+final List<({int index, String name, int width, int height, bool isPrimary, int handle})> _tempMonitorList = [];
 
 void _onWindowEnumerated(Pointer<NativeWindowInfo> info) {
   final hwnd = info.ref.hwnd;
@@ -30,6 +31,18 @@ void _onWebcamEnumerated(Pointer<NativeWebcamDeviceInfo> info) {
   _tempWebcamList.add((id: id, name: name));
 }
 
+void _onMonitorEnumerated(Pointer<NativeMonitorInfo> info) {
+  final name = info.ref.name.cast<Utf8>().toDartString();
+  _tempMonitorList.add((
+    index: info.ref.index,
+    name: name,
+    width: info.ref.width,
+    height: info.ref.height,
+    isPrimary: info.ref.isPrimary,
+    handle: info.ref.handle
+  ));
+}
+
 class RecordingService {
   late final EngineBindings _bindings;
   bool _isInitialized = false;
@@ -46,6 +59,7 @@ class RecordingService {
   bool get isInitialized => _isInitialized;
 
   int start(int width, int height, int fps, String outputPath, int targetHwnd, String encoder, {
+    int? monitorHandle,
     String? micId, 
     String? sysId, 
     String? webcamId,
@@ -70,6 +84,7 @@ class RecordingService {
       configPtr.ref.captureCursor = true;
       configPtr.ref.captureAudio = true;
       configPtr.ref.targetHwnd = targetHwnd;
+      configPtr.ref.monitorHandle = monitorHandle ?? 0;
       configPtr.ref.encoderName = encoderPtr;
       configPtr.ref.micDeviceId = micIdPtr;
       configPtr.ref.sysAudioDeviceId = sysIdPtr;
@@ -150,6 +165,14 @@ class RecordingService {
     final nativeCallback = Pointer.fromFunction<WebcamCallbackNative>(_onWebcamEnumerated);
     _bindings.enumerateWebcams(nativeCallback);
     return List.from(_tempWebcamList);
+  }
+
+  List<({int index, String name, int width, int height, bool isPrimary, int handle})> getMonitors() {
+    if (!_isInitialized) return [];
+    _tempMonitorList.clear();
+    final nativeCallback = Pointer.fromFunction<MonitorCallbackNative>(_onMonitorEnumerated);
+    _bindings.enumerateMonitors(nativeCallback);
+    return List.from(_tempMonitorList);
   }
 
   void setSettingString(String key, String value) {

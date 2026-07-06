@@ -71,8 +71,14 @@ bool WGCCapturer::initialize(const RecordingConfig& config) {
         CS_LOG_INFO("WGC: Capturing HWND: " + std::to_string(config.target_hwnd));
         hr = interop->CreateForWindow(reinterpret_cast<HWND>(config.target_hwnd), winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
     } else {
-        CS_LOG_INFO("WGC: Capturing Primary Monitor");
-        HMONITOR hMonitor = MonitorFromWindow(nullptr, MONITOR_DEFAULTTOPRIMARY);
+        HMONITOR hMonitor;
+        if (config.monitor_handle != 0) {
+            CS_LOG_INFO("WGC: Capturing Monitor Handle: " + std::to_string(config.monitor_handle));
+            hMonitor = reinterpret_cast<HMONITOR>(config.monitor_handle);
+        } else {
+            CS_LOG_INFO("WGC: Capturing Primary Monitor");
+            hMonitor = MonitorFromWindow(nullptr, MONITOR_DEFAULTTOPRIMARY);
+        }
         hr = interop->CreateForMonitor(hMonitor, winrt::guid_of<winrt::Windows::Graphics::Capture::GraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(item_)));
     }
 
