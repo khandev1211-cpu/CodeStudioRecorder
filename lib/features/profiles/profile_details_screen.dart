@@ -129,6 +129,65 @@ class _ProfileDetailsScreenState extends ConsumerState<ProfileDetailsScreen> {
             ],
             onChanged: (v) => setState(() => _profile = _profile.copyWith(webcamDeviceId: v)),
           ),
+          if (_profile.webcamDeviceId != null) ...[
+            SwitchListTile(
+              title: const Text("Enable Webcam Overlay (PiP)"),
+              value: _profile.webcamEnabled,
+              onChanged: (v) => setState(() => _profile = _profile.copyWith(webcamEnabled: v)),
+            ),
+            if (_profile.webcamEnabled) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(labelText: "X Position"),
+                            keyboardType: TextInputType.number,
+                            controller: TextEditingController(text: _profile.webcamX.toInt().toString()),
+                            onChanged: (v) => _profile = _profile.copyWith(webcamX: double.tryParse(v) ?? 20),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(labelText: "Y Position"),
+                            keyboardType: TextInputType.number,
+                            controller: TextEditingController(text: _profile.webcamY.toInt().toString()),
+                            onChanged: (v) => _profile = _profile.copyWith(webcamY: double.tryParse(v) ?? 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(labelText: "Width"),
+                            keyboardType: TextInputType.number,
+                            controller: TextEditingController(text: _profile.webcamWidth.toInt().toString()),
+                            onChanged: (v) => _profile = _profile.copyWith(webcamWidth: double.tryParse(v) ?? 320),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(labelText: "Height"),
+                            keyboardType: TextInputType.number,
+                            controller: TextEditingController(text: _profile.webcamHeight.toInt().toString()),
+                            onChanged: (v) => _profile = _profile.copyWith(webcamHeight: double.tryParse(v) ?? 180),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
           const Divider(height: 40),
           const Text("Effects (Default State)", style: TextStyle(fontWeight: FontWeight.bold)),
           SwitchListTile(
@@ -180,7 +239,12 @@ extension on RecordingProfile {
     String? encoder,
     String? micDeviceId,
     String? sysAudioDeviceId,
+    bool? webcamEnabled,
     String? webcamDeviceId,
+    double? webcamX,
+    double? webcamY,
+    double? webcamWidth,
+    double? webcamHeight,
     bool? cursorHighlight,
     bool? clickAnimations,
     bool? smartZoom,
@@ -197,7 +261,12 @@ extension on RecordingProfile {
       encoder: encoder ?? this.encoder,
       micDeviceId: micDeviceId ?? this.micDeviceId,
       sysAudioDeviceId: sysAudioDeviceId ?? this.sysAudioDeviceId,
+      webcamEnabled: webcamEnabled ?? this.webcamEnabled,
       webcamDeviceId: webcamDeviceId ?? this.webcamDeviceId,
+      webcamX: webcamX ?? this.webcamX,
+      webcamY: webcamY ?? this.webcamY,
+      webcamWidth: webcamWidth ?? this.webcamWidth,
+      webcamHeight: webcamHeight ?? this.webcamHeight,
       cursorHighlight: cursorHighlight ?? this.cursorHighlight,
       clickAnimations: clickAnimations ?? this.clickAnimations,
       smartZoom: smartZoom ?? this.smartZoom,

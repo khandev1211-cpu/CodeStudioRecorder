@@ -305,6 +305,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               if (selectedProfile.smartZoom) {
                                 service.setZoomLevel(selectedProfile.zoomLevel);
                               }
+                              
+                              service.setProcessorEnabled(4, selectedProfile.webcamEnabled);
+                              if (selectedProfile.webcamEnabled) {
+                                service.setWebcamPosition(
+                                  selectedProfile.webcamX.toDouble(), 
+                                  selectedProfile.webcamY.toDouble(), 
+                                  selectedProfile.webcamWidth.toDouble(), 
+                                  selectedProfile.webcamHeight.toDouble()
+                                );
+                              }
 
                               recordingNotifier.start(
                                 selectedProfile.width, 

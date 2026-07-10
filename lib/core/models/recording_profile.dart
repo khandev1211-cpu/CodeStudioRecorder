@@ -13,7 +13,12 @@ class RecordingProfile {
   final String encoder; // e.g. "auto", "h264_nvenc", "libx264"
   final String? micDeviceId;
   final String? sysAudioDeviceId;
+  final bool webcamEnabled;
   final String? webcamDeviceId;
+  final double webcamX;
+  final double webcamY;
+  final double webcamWidth;
+  final double webcamHeight;
   
   // AI Features
   final bool aiNoiseRemoval;
@@ -35,7 +40,12 @@ class RecordingProfile {
     this.encoder = "auto",
     this.micDeviceId,
     this.sysAudioDeviceId,
+    this.webcamEnabled = false,
     this.webcamDeviceId,
+    this.webcamX = 20,
+    this.webcamY = 20,
+    this.webcamWidth = 320,
+    this.webcamHeight = 180,
     this.aiNoiseRemoval = false,
     this.aiAutoCaptions = false,
     this.aiSilenceDetection = false,
@@ -56,7 +66,12 @@ class RecordingProfile {
     'encoder': encoder,
     'micDeviceId': micDeviceId,
     'sysAudioDeviceId': sysAudioDeviceId,
+    'webcamEnabled': webcamEnabled,
     'webcamDeviceId': webcamDeviceId,
+    'webcamX': webcamX,
+    'webcamY': webcamY,
+    'webcamWidth': webcamWidth,
+    'webcamHeight': webcamHeight,
     'aiNoiseRemoval': aiNoiseRemoval,
     'aiAutoCaptions': aiAutoCaptions,
     'aiSilenceDetection': aiSilenceDetection,
@@ -77,7 +92,12 @@ class RecordingProfile {
     encoder: json['encoder'] ?? "auto",
     micDeviceId: json['micDeviceId'],
     sysAudioDeviceId: json['sysAudioDeviceId'],
+    webcamEnabled: json['webcamEnabled'] ?? false,
     webcamDeviceId: json['webcamDeviceId'],
+    webcamX: (json['webcamX'] ?? 20).toDouble(),
+    webcamY: (json['webcamY'] ?? 20).toDouble(),
+    webcamWidth: (json['webcamWidth'] ?? 320).toDouble(),
+    webcamHeight: (json['webcamHeight'] ?? 180).toDouble(),
     aiNoiseRemoval: json['aiNoiseRemoval'] ?? false,
     aiAutoCaptions: json['aiAutoCaptions'] ?? false,
     aiSilenceDetection: json['aiSilenceDetection'] ?? false,
