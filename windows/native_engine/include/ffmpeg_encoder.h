@@ -43,6 +43,8 @@ private:
     AVFrame* video_frame_ = nullptr;
     SwsContext* sws_ctx_ = nullptr;
     ID3D11Texture2D* staging_texture_ = nullptr;
+    uint32_t staging_width_ = 0;
+    uint32_t staging_height_ = 0;
 
     // Audio
     AVCodecContext* audio_codec_ctx_ = nullptr;

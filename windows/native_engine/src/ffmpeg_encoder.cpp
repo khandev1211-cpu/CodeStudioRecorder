@@ -264,14 +264,27 @@ void FFmpegEncoder::encodeVideoFrame(const VideoFrame& frame) {
     device->GetImmediateContext(&context);
 
     // 1. Create/Ensure staging texture for CPU access
-    if (!staging_texture_) {
-        D3D11_TEXTURE2D_DESC desc;
-        source_texture->GetDesc(&desc);
+    D3D11_TEXTURE2D_DESC src_desc;
+    source_texture->GetDesc(&src_desc);
+
+    if (!staging_texture_ || staging_width_ != src_desc.Width || staging_height_ != src_desc.Height) {
+        if (staging_texture_) staging_texture_->Release();
+
+        D3D11_TEXTURE2D_DESC desc = src_desc;
         desc.Usage = D3D11_USAGE_STAGING;
         desc.BindFlags = 0;
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
         desc.MiscFlags = 0;
-        device->CreateTexture2D(&desc, nullptr, &staging_texture_);
+
+        HRESULT hr = device->CreateTexture2D(&desc, nullptr, &staging_texture_);
+        if (FAILED(hr)) {
+            CS_LOG_ERR("Failed to create staging texture");
+            device->Release();
+            context->Release();
+            return;
+        }
+        staging_width_ = src_desc.Width;
+        staging_height_ = src_desc.Height;
     }
 
     // 2. Copy from GPU to Staging
