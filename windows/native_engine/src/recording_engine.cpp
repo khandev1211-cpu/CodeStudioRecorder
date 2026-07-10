@@ -282,45 +282,81 @@ std::vector<ChapterMarker> RecordingEngine::getMarkers() const {
 
 void RecordingEngine::onVideoFrame(const VideoFrame& frame) {
     if (status_ == RecordingStatus::Recording) {
-        POINT p;
-        if (GetCursorPos(&p)) {
-            OverlayManager::instance().updateCursorPosition((float)p.x, (float)p.y);
-        }
-
-        // Copy capture frame to a pool-managed texture that supports D2D drawing
-        auto target_tex = texture_pool_->acquire(frame.width, frame.height, DXGI_FORMAT_B8G8R8A8_UNORM);
-        if (!target_tex) return;
-
-        capturer_->getContext()->CopyResource(target_tex.Get(), static_cast<ID3D11Texture2D*>(frame.data));
-
-        VideoFrame processedFrame = frame;
-        processedFrame.data = target_tex.Get();
-
-        for (auto& processor : processors_) {
-            if (processor->isEnabled()) {
-                processor->process(processedFrame, capturer_->getDevice(), capturer_->getContext());
+        try {
+            if (!frame.data) {
+                CS_LOG_WARN("Received video frame with null data");
+                return;
             }
-        }
 
-        for (auto& plugin : PluginManager::instance().getPlugins()) {
-            if (plugin->isEnabled()) {
-                plugin->process(processedFrame, capturer_->getDevice(), capturer_->getContext());
+            POINT p;
+            if (GetCursorPos(&p)) {
+                OverlayManager::instance().updateCursorPosition((float)p.x, (float)p.y);
             }
+
+            if (!texture_pool_) {
+                CS_LOG_ERR("Texture pool is null in onVideoFrame");
+                return;
+            }
+
+            // Copy capture frame to a pool-managed texture that supports D2D drawing
+            auto target_tex = texture_pool_->acquire(frame.width, frame.height, DXGI_FORMAT_B8G8R8A8_UNORM);
+            if (!target_tex) {
+                CS_LOG_ERR("Failed to acquire texture from pool (" + std::to_string(frame.width) + "x" + std::to_string(frame.height) + ")");
+                return;
+            }
+
+            ID3D11DeviceContext* context = capturer_->getContext();
+            if (!context) {
+                CS_LOG_ERR("D3D Context is null in onVideoFrame");
+                return;
+            }
+
+            ID3D11Texture2D* src_tex = static_cast<ID3D11Texture2D*>(frame.data);
+
+            // Safety: Ensure source texture dimensions match target
+            D3D11_TEXTURE2D_DESC src_desc;
+            src_tex->GetDesc(&src_desc);
+            if (src_desc.Width != frame.width || src_desc.Height != frame.height) {
+                CS_LOG_WARN("Source texture dimensions mismatch content size. Adjusting...");
+                // We'll skip this frame to be safe rather than crashing CopyResource
+                return;
+            }
+
+            context->CopyResource(target_tex.Get(), src_tex);
+
+            VideoFrame processedFrame = frame;
+            processedFrame.data = target_tex.Get();
+
+            for (auto& processor : processors_) {
+                if (processor->isEnabled()) {
+                    processor->process(processedFrame, capturer_->getDevice(), context);
+                }
+            }
+
+            for (auto& plugin : PluginManager::instance().getPlugins()) {
+                if (plugin->isEnabled()) {
+                    plugin->process(processedFrame, capturer_->getDevice(), context);
+                }
+            }
+
+            // Push to encoding queue
+            EncoderTask task;
+            task.type = EncoderTask::Type::Video;
+            task.video_frame = processedFrame;
+
+            // Increment reference for the worker thread
+            static_cast<IUnknown*>(processedFrame.data)->AddRef();
+
+            pushTask(std::move(task));
+
+            std::lock_guard<std::mutex> lock(stats_mutex_);
+            auto now = std::chrono::steady_clock::now();
+            stats_.elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
+        } catch (const std::exception& e) {
+            CS_LOG_ERR("Exception in onVideoFrame: " + std::string(e.what()));
+        } catch (...) {
+            CS_LOG_ERR("Unknown exception in onVideoFrame");
         }
-
-        // Push to encoding queue
-        EncoderTask task;
-        task.type = EncoderTask::Type::Video;
-        task.video_frame = processedFrame;
-        // The texture must be kept alive until encoded.
-        // We'll increment the reference manually since VideoFrame uses raw void*.
-        if (processedFrame.data) static_cast<IUnknown*>(processedFrame.data)->AddRef();
-
-        pushTask(std::move(task));
-
-        std::lock_guard<std::mutex> lock(stats_mutex_);
-        auto now = std::chrono::steady_clock::now();
-        stats_.elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time_).count();
     }
 }
 
@@ -374,9 +410,9 @@ void RecordingEngine::workerLoop() {
         if (task.type == EncoderTask::Type::Video) {
             encoder_->encodeVideoFrame(task.video_frame);
             if (task.video_frame.data) {
-                static_cast<IUnknown*>(task.video_frame.data)->Release();
-                // Release back to pool if it was a pool texture
-                // We'll rely on the pool's own internal ref counting or just raw ptr for now.
+                ID3D11Texture2D* tex = static_cast<ID3D11Texture2D*>(task.video_frame.data);
+                texture_pool_->release(tex);
+                tex->Release();
             }
         } else if (task.type == EncoderTask::Type::Audio) {
             AudioBuffer ab;

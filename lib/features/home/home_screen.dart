@@ -8,6 +8,7 @@ import 'package:codestudio_recorder/core/services/recording_service.dart';
 import 'package:codestudio_recorder/shared/theme/app_logo.dart';
 import 'package:codestudio_recorder/features/recording/annotation_toolbar.dart';
 import 'package:codestudio_recorder/features/recording/annotation_state.dart';
+import 'package:codestudio_recorder/features/recording/monitor_provider.dart';
 
 import 'package:codestudio_recorder/shared/widgets/volume_meter.dart';
 
@@ -36,6 +37,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final selectedProfile = ref.watch(selectedProfileProvider);
 
     final isRecording = recordingState.status == RecordingStatus.recording;
+    final monitors = ref.watch(monitorProvider);
+    final selectedMonitorHandle = ref.watch(selectedMonitorHandleProvider);
 
     // Listener for errors
     ref.listen(recordingStateProvider, (previous, next) {
@@ -249,6 +252,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           error: (e, s) => Text("Error loading windows: $e"),
                         ),
                       ),
+                      if (selectedWindow == null) ...[
+                        const SizedBox(height: 15),
+                        const Text("Select Monitor:"),
+                        const SizedBox(height: 5),
+                        Container(
+                          width: 400,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white24),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: monitors.when(
+                            data: (data) => DropdownButton<int>(
+                              value: selectedMonitorHandle,
+                              hint: const Text("Default Monitor"),
+                              isExpanded: true,
+                              underline: const SizedBox(),
+                              items: [
+                                const DropdownMenuItem<int>(
+                                  value: null,
+                                  child: Text("Primary Monitor"),
+                                ),
+                                ...data.map((mon) => DropdownMenuItem<int>(
+                                      value: mon.handle,
+                                      child: Text("${mon.name} (${mon.width}x${mon.height})"),
+                                    )),
+                              ],
+                              onChanged: (val) {
+                                ref.read(selectedMonitorHandleProvider.notifier).state = val;
+                              },
+                            ),
+                            loading: () => const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                            error: (e, s) => Text("Error loading monitors"),
+                          ),
+                        ),
+                      ],
                     ],
                     const SizedBox(height: 40),
                     Row(
@@ -274,6 +313,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 null, 
                                 hwnd,
                                 selectedProfile.encoder,
+                                monitorHandle: selectedMonitorHandle,
                                 micId: selectedProfile.micDeviceId,
                                 sysId: selectedProfile.sysAudioDeviceId,
                                 webcamId: selectedProfile.webcamDeviceId,

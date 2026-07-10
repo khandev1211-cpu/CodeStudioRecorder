@@ -14,6 +14,7 @@ public:
 
     Microsoft::WRL::ComPtr<ID3D11Texture2D> acquire(uint32_t width, uint32_t height, DXGI_FORMAT format);
     void release(Microsoft::WRL::ComPtr<ID3D11Texture2D> texture);
+    void release(ID3D11Texture2D* texture);
 
 private:
     Microsoft::WRL::ComPtr<ID3D11Device> device_;

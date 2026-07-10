@@ -57,6 +57,7 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
   RecordingNotifier(this._service, this._historyService) : super(RecordingState());
 
   Future<void> start(int width, int height, int fps, String? customPath, int targetHwnd, String encoder, {
+    int? monitorHandle,
     String? micId, 
     String? sysId, 
     String? webcamId,
@@ -113,9 +114,10 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
       }
     }
 
-    print("RecordingNotifier: Calling service.start with ${width}x${height}, $fps fps, path: $outputPath, hwnd: $targetHwnd, encoder: $encoder");
+    print("RecordingNotifier: Calling service.start with ${width}x${height}, $fps fps, path: $outputPath, hwnd: $targetHwnd, mon: $monitorHandle, encoder: $encoder");
     final result = _service.start(
       width, height, fps, outputPath, targetHwnd, encoder,
+      monitorHandle: monitorHandle,
       micId: micId, sysId: sysId, webcamId: webcamId,
       aiNoise: aiNoise, aiCaptions: aiCaptions, aiSilence: aiSilence,
     );

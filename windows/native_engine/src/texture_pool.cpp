@@ -46,4 +46,10 @@ void TexturePool::release(Microsoft::WRL::ComPtr<ID3D11Texture2D> texture) {
     pool_.push_back(texture);
 }
 
+void TexturePool::release(ID3D11Texture2D* texture) {
+    if (!texture) return;
+    std::lock_guard<std::mutex> lock(mutex_);
+    pool_.push_back(Microsoft::WRL::ComPtr<ID3D11Texture2D>(texture));
+}
+
 } // namespace cs
