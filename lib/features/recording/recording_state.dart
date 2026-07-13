@@ -7,6 +7,8 @@ import 'package:codestudio_recorder/core/models/recording_stats.dart';
 import 'package:codestudio_recorder/core/ffi/types/native_types.dart';
 import 'package:codestudio_recorder/core/services/history_service.dart';
 import 'package:codestudio_recorder/core/models/recording.dart';
+import 'package:codestudio_recorder/features/export/export_dialog.dart';
+import 'package:flutter/material.dart';
 
 class RecordingState {
   final RecordingStatus status;

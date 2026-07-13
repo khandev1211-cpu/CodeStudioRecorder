@@ -9,6 +9,9 @@ import 'package:codestudio_recorder/shared/theme/app_logo.dart';
 import 'package:codestudio_recorder/features/recording/annotation_toolbar.dart';
 import 'package:codestudio_recorder/features/recording/annotation_state.dart';
 import 'package:codestudio_recorder/features/recording/monitor_provider.dart';
+import 'package:codestudio_recorder/features/home/widgets/recording_dashboard.dart';
+import 'package:codestudio_recorder/features/export/export_dialog.dart';
+import 'package:codestudio_recorder/core/services/history_service.dart';
 
 import 'package:codestudio_recorder/shared/widgets/volume_meter.dart';
 
@@ -50,370 +53,265 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         );
       }
+      
+      if (next.status == RecordingStatus.completed && previous?.status != RecordingStatus.completed) {
+        final lastRecording = ref.read(historyServiceProvider).history.firstOrNull;
+        if (lastRecording != null) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => ExportDialog(recording: lastRecording),
+          );
+        }
+      }
     });
 
     return Scaffold(
       appBar: AppBar(
-        title: const AppLogo(size: 32, showText: true),
+        title: const AppLogo(size: 28, showText: true),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.extension),
+            icon: const Icon(Icons.extension_outlined),
             tooltip: 'Plugins',
             onPressed: () => context.go('/plugins'),
           ),
           IconButton(
-            icon: const Icon(Icons.description),
-            tooltip: 'Recording Profiles',
+            icon: const Icon(Icons.description_outlined),
+            tooltip: 'Profiles',
             onPressed: () => context.go('/profiles'),
           ),
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.history_outlined),
+            tooltip: 'History',
             onPressed: () => context.go('/history'),
           ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
             onPressed: () => context.go('/settings'),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(windowsProvider),
-          ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Stack(
+      body: Row(
         children: [
-          GestureDetector(
-            onPanStart: (details) {
-              if (isRecording && annState.tool != AnnotationTool.none) {
-                setState(() => _startPoint = details.localPosition);
-              }
-            },
-            onPanEnd: (details) {
-              setState(() => _startPoint = null);
-            },
-            onPanUpdate: (details) {
-              if (isRecording && _startPoint != null && annState.tool != AnnotationTool.none) {
-                final RenderBox renderBox = context.findRenderObject() as RenderBox;
-                final size = renderBox.size;
-                
-                // Scale coordinates from logical pixels to recording resolution
-                double scaleX = selectedProfile.width / size.width;
-                double scaleY = selectedProfile.height / size.height;
-
-                service.undoAnnotation(); // Remove previous preview
-                
-                int typeIndex = 0;
-                switch(annState.tool) {
-                  case AnnotationTool.line: typeIndex = 0; break;
-                  case AnnotationTool.rect: typeIndex = 1; break;
-                  case AnnotationTool.ellipse: typeIndex = 2; break;
-                  case AnnotationTool.arrow: typeIndex = 3; break;
-                  default: break;
-                }
-
-                service.addAnnotation(
-                  typeIndex, 
-                  _startPoint!.dx * scaleX, _startPoint!.dy * scaleY, 
-                  details.localPosition.dx * scaleX, details.localPosition.dy * scaleY, 
-                  annState.color.value, 
-                  annState.strokeWidth
-                );
-              }
-            },
-            onTapDown: (details) {
-              // Click reporting is now handled by the global native hook
-              // for better reliability across all applications.
-            },
+          // Left Side - Controls & Dashboard
+          Container(
+            width: 450,
+            padding: const EdgeInsets.all(24.0),
+            decoration: const BoxDecoration(
+              border: Border(right: BorderSide(color: Colors.white10)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isRecording) ...[
+                  const RecordingDashboard(),
+                  const Spacer(),
+                  _buildStartButton(context, recordingNotifier, selectedProfile, selectedWindow, selectedMonitor, service),
+                ] else ...[
+                  _buildRecordingActiveView(recordingState, selectedWindow, recordingNotifier, context, service),
+                ],
+              ],
+            ),
+          ),
+          
+          // Right Side - Visual Preview / Status
+          Expanded(
             child: Container(
-              color: Colors.transparent, // Capture gestures
-              padding: const EdgeInsets.all(24.0),
+              color: const Color(0xFF0A0A0A),
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (!isRecording)
-                      const AppLogo(size: 120)
-                    else
-                      const Icon(
-                        Icons.videocam,
-                        size: 80,
-                        color: Colors.red,
-                      ),
-                    if (isRecording) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        _formatDuration(recordingState.elapsedTime),
-                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
-                      ),
-                      Text(
-                        'Recording ${selectedWindow?.title ?? "Full Screen"}',
-                        style: const TextStyle(color: Colors.redAccent),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: 250,
-                        child: Column(
-                          children: [
-                            VolumeMeter(
-                              level: recordingState.micLevel,
-                              label: "MICROPHONE",
-                              color: Colors.blueAccent,
-                            ),
-                            const SizedBox(height: 12),
-                            VolumeMeter(
-                              level: recordingState.systemLevel,
-                              label: "SYSTEM AUDIO",
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (recordingState.currentCaption != null) ...[
-                        const SizedBox(height: 30),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            recordingState.currentCaption!,
-                            style: const TextStyle(
-                              color: Colors.yellowAccent,
-                              fontSize: 18,
-                              fontStyle: FontStyle.italic,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ] else ...[
-                      const SizedBox(height: 20),
-                      const Text("Recording Profile:"),
-                      const SizedBox(height: 5),
-                      Container(
-                        width: 400,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white24),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: DropdownButton<String>(
-                          value: selectedProfile.id,
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          items: profileService.profiles.map((p) => DropdownMenuItem(
-                            value: p.id,
-                            child: Text(p.name),
-                          )).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              final profile = profileService.profiles.firstWhere((p) => p.id == val);
-                              ref.read(selectedProfileProvider.notifier).state = profile;
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text("Select target to record:"),
-                      const SizedBox(height: 10),
-                      Container(
-                        width: 400,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white24),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: windows.when(
-                          data: (data) => DropdownButton<int>(
-                            value: selectedWindow?.hwnd,
-                            hint: const Text("Full Screen (Primary Monitor)"),
-                            isExpanded: true,
-                            underline: const SizedBox(),
-                            items: [
-                              const DropdownMenuItem<int>(
-                                value: null,
-                                child: Text("Full Screen"),
-                              ),
-                              ...data.map((win) => DropdownMenuItem<int>(
-                                    value: win.hwnd,
-                                    child: Text(win.title, overflow: TextOverflow.ellipsis),
-                                  )),
-                            ],
-                            onChanged: (val) {
-                              if (val == null) {
-                                ref.read(selectedWindowProvider.notifier).state = null;
-                              } else {
-                                final win = data.firstWhere((element) => element.hwnd == val);
-                                ref.read(selectedWindowProvider.notifier).state = win;
-                              }
-                            },
-                          ),
-                          loading: () => const CircularProgressIndicator(),
-                          error: (e, s) => Text("Error loading windows: $e"),
-                        ),
-                      ),
-                      if (selectedWindow == null) ...[
-                        const SizedBox(height: 15),
-                        const Text("Select Monitor:"),
-                        const SizedBox(height: 5),
-                        Container(
-                          width: 400,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white24),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: monitors.when(
-                            data: (data) => DropdownButton<int>(
-                              value: selectedMonitorHandle,
-                              hint: const Text("Default Monitor"),
-                              isExpanded: true,
-                              underline: const SizedBox(),
-                              items: [
-                                const DropdownMenuItem<int>(
-                                  value: null,
-                                  child: Text("Primary Monitor"),
-                                ),
-                                ...data.map((mon) => DropdownMenuItem<int>(
-                                      value: mon.handle,
-                                      child: Text("${mon.name} (${mon.width}x${mon.height})"),
-                                    )),
-                              ],
-                              onChanged: (val) {
-                                ref.read(selectedMonitorHandleProvider.notifier).state = val;
-                              },
-                            ),
-                            loading: () => const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                            error: (e, s) => Text("Error loading monitors"),
-                          ),
-                        ),
-                      ],
-                    ],
-                    const SizedBox(height: 40),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (!isRecording)
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              final hwnd = ref.read(selectedWindowProvider)?.hwnd ?? 0;
-                              
-                              // Apply profile settings before starting
-                              service.setProcessorEnabled(0, selectedProfile.cursorHighlight);
-                              service.setProcessorEnabled(1, selectedProfile.clickAnimations);
-                              service.setProcessorEnabled(3, selectedProfile.smartZoom);
-                              if (selectedProfile.smartZoom) {
-                                service.setZoomLevel(selectedProfile.zoomLevel);
-                              }
-                              
-                              service.setProcessorEnabled(4, selectedProfile.webcamEnabled);
-                              if (selectedProfile.webcamEnabled) {
-                                service.setWebcamPosition(
-                                  selectedProfile.webcamX.toDouble(), 
-                                  selectedProfile.webcamY.toDouble(), 
-                                  selectedProfile.webcamWidth.toDouble(), 
-                                  selectedProfile.webcamHeight.toDouble()
-                                );
-                              }
-
-                              recordingNotifier.start(
-                                selectedProfile.width, 
-                                selectedProfile.height, 
-                                selectedProfile.fps, 
-                                null, 
-                                hwnd,
-                                selectedProfile.encoder,
-                                monitorHandle: selectedMonitorHandle,
-                                micId: selectedProfile.micDeviceId,
-                                sysId: selectedProfile.sysAudioDeviceId,
-                                webcamId: selectedProfile.webcamDeviceId,
-                                aiNoise: selectedProfile.aiNoiseRemoval,
-                                aiCaptions: selectedProfile.aiAutoCaptions,
-                                aiSilence: selectedProfile.aiSilenceDetection,
-                              );
-                            },
-                            icon: const Icon(Icons.fiber_manual_record),
-                            label: const Text('START RECORDING'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red.shade700,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                            ),
-                          )
-                        else
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: () => _showAddMarkerDialog(context, service),
-                                icon: const Icon(Icons.bookmark_add),
-                                label: const Text('MARK'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white10,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton.icon(
-                                onPressed: () => recordingNotifier.stop(),
-                                icon: const Icon(Icons.stop),
-                                label: const Text('STOP RECORDING'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                    if (recordingState.status == RecordingStatus.completed)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 20),
-                        child: Text('Recording saved successfully!', style: TextStyle(color: Colors.greenAccent)),
-                      ),
-                    if (recordingState.status == RecordingStatus.finalizing || recordingState.status == RecordingStatus.flushing)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 20),
-                        child: Column(
-                          children: [
-                            CircularProgressIndicator(strokeWidth: 2),
-                            SizedBox(height: 8),
-                            Text('Finalizing video file...', style: TextStyle(color: Colors.white70)),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
+                child: isRecording 
+                  ? _buildLiveStats(recordingState)
+                  : _buildIdlePreview(selectedProfile),
               ),
             ),
           ),
-          if (isRecording)
-            Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (annState.tool == AnnotationTool.none)
-                      ElevatedButton.icon(
-                        onPressed: () => ref.read(annotationProvider.notifier).setTool(AnnotationTool.line),
-                        icon: const Icon(Icons.edit),
-                        label: const Text('DRAW ON SCREEN'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white10,
-                        ),
-                      )
-                    else
-                      const AnnotationToolbar(),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );
+  }
+
+  Widget _buildStartButton(BuildContext context, RecordingNotifier notifier, RecordingProfile profile, WindowInfo? window, int? monitor, RecordingService service) {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          service.setProcessorEnabled(0, profile.cursorHighlight);
+          service.setProcessorEnabled(1, profile.clickAnimations);
+          service.setProcessorEnabled(3, profile.smartZoom);
+          if (profile.smartZoom) service.setZoomLevel(profile.zoomLevel);
+          service.setProcessorEnabled(4, profile.webcamEnabled);
+          if (profile.webcamEnabled) {
+            service.setWebcamPosition(profile.webcamX, profile.webcamY, profile.webcamWidth, profile.webcamHeight);
+          }
+
+          notifier.start(
+            profile.width, profile.height, profile.fps, null, 
+            window?.hwnd ?? 0, profile.encoder,
+            monitorHandle: monitor,
+            micId: profile.micDeviceId,
+            sysId: profile.sysAudioDeviceId,
+            webcamId: profile.webcamDeviceId,
+            aiNoise: profile.aiNoiseRemoval,
+            aiCaptions: profile.aiAutoCaptions,
+            aiSilence: profile.aiSilenceDetection,
+          );
+        },
+        icon: const Icon(Icons.fiber_manual_record, size: 28),
+        label: const Text('START RECORDING', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFF3B3B),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordingActiveView(RecordingState state, WindowInfo? window, RecordingNotifier notifier, BuildContext context, RecordingService service) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.videocam, size: 80, color: Color(0xFFFF3B3B)),
+        const SizedBox(height: 16),
+        Text(
+          _formatDuration(state.elapsedTime),
+          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+        ),
+        Text(
+          'RECORDING ACTIVE',
+          style: TextStyle(color: Colors.white.withOpacity(0.5), letterSpacing: 2, fontSize: 12),
+        ),
+        const SizedBox(height: 40),
+        VolumeMeter(level: state.micLevel, label: "MIC"),
+        const SizedBox(height: 16),
+        VolumeMeter(level: state.systemLevel, label: "SYSTEM"),
+        const Spacer(),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _showAddMarkerDialog(context, service),
+                icon: const Icon(Icons.bookmark_add_outlined),
+                label: const Text("MARK"),
+                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 20)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => notifier.stop(),
+                icon: const Icon(Icons.stop),
+                label: const Text("STOP"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIdlePreview(RecordingProfile profile) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Visual Layout Mockup
+        Container(
+          width: 480,
+          height: 270,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white10, width: 2),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 40, spreadRadius: 10),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Image.asset("assets/images/grid.png", fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.grid_3x3, size: 100)),
+                ),
+              ),
+              if (profile.webcamEnabled)
+                Positioned(
+                  left: profile.webcamX / 4, // Scale to mockup size
+                  top: profile.webcamY / 4,
+                  child: Container(
+                    width: profile.webcamWidth / 4,
+                    height: profile.webcamHeight / 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF3B3B).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFF3B3B), width: 2),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.videocam, color: Color(0xFFFF3B3B)),
+                    ),
+                  ),
+                ),
+              const Positioned(
+                bottom: 12,
+                left: 12,
+                child: Row(
+                  children: [
+                    Icon(Icons.fiber_manual_record, color: Colors.red, size: 12),
+                    SizedBox(width: 8),
+                    Text("LIVE PREVIEW MODE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 48),
+        const AppLogo(size: 80),
+        const SizedBox(height: 16),
+        Text(
+          profile.name.toUpperCase(),
+          style: const TextStyle(fontSize: 12, letterSpacing: 4, fontWeight: FontWeight.w400, color: Colors.white54),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "${profile.width} × ${profile.height} @ ${profile.fps} FPS",
+          style: const TextStyle(color: Colors.white12, fontSize: 14),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLiveStats(RecordingState state) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (state.currentCaption != null)
+          Container(
+            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              state.currentCaption!,
+              style: const TextStyle(fontSize: 24, fontStyle: FontStyle.italic, color: Colors.yellowAccent),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    );
+  }
   }
 
   String _formatDuration(Duration duration) {
