@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:codestudio_recorder/core/services/recording_service.dart';
 
@@ -9,13 +11,22 @@ class SetupService {
 
   Future<bool> runIntegrityCheck() async {
     if (!_service.isInitialized) return false;
-    
-    // Check system requirements (Win version, DX11, FFmpeg)
-    bool sysOk = _service.checkSystemRequirements();
-    if (!sysOk) return false;
+    return _service.checkSystemRequirements();
+  }
 
-    // Additional checks like folder permissions could go here
-    return true;
+  Future<void> initializeStorage() async {
+    final userProfile = Platform.environment['USERPROFILE'] ?? '.';
+    final dirs = [
+      p.join(userProfile, 'Videos', 'CodeStudio'),
+      p.join(userProfile, 'AppData', 'Local', 'CodeStudioRecorder'),
+    ];
+
+    for (final path in dirs) {
+      final dir = Directory(path);
+      if (!dir.existsSync()) {
+        await dir.create(recursive: true);
+      }
+    }
   }
 
   bool checkSystemRequirements() {
