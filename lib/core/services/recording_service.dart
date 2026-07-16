@@ -211,6 +211,23 @@ class RecordingService {
     return _bindings.getPluginCount();
   }
 
+  ({String name, String description, String author, String version}) getPluginInfo(int index) {
+    if (!_isInitialized) return (name: "Unknown", description: "", author: "", version: "");
+    
+    final infoPtr = calloc<NativePluginInfo>();
+    try {
+      _bindings.getPluginInfo(index, infoPtr);
+      return (
+        name: infoPtr.ref.name.cast<Utf8>().toDartString(),
+        description: infoPtr.ref.description.cast<Utf8>().toDartString(),
+        author: infoPtr.ref.author.cast<Utf8>().toDartString(),
+        version: infoPtr.ref.version.cast<Utf8>().toDartString(),
+      );
+    } finally {
+      calloc.free(infoPtr);
+    }
+  }
+
   void reportMouseClick(double x, double y) {
     if (!_isInitialized) return;
     _bindings.reportMouseClick(x, y);

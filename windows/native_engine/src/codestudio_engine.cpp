@@ -285,6 +285,16 @@ CSE_API int32_t cse_get_plugin_count() {
     return SessionManager::instance().getPluginCount();
 }
 
+CSE_API void cse_get_plugin_info(int32_t index, NativePluginInfo* info) {
+    auto& plugins = cs::PluginManager::instance().getPlugins();
+    if (index >= 0 && index < (int32_t)plugins.size() && info) {
+        info->name = plugins[index]->getName();
+        info->description = plugins[index]->getDescription();
+        info->author = plugins[index]->getAuthor();
+        info->version = plugins[index]->getVersion();
+    }
+}
+
 CSE_API void cse_report_mouse_click(float x, float y) {
     SessionManager::instance().handleMouseClick(x, y);
 }

@@ -17,6 +17,11 @@ public:
 
     virtual bool isEnabled() const = 0;
     virtual void setEnabled(bool enabled) = 0;
+
+    virtual const char* getName() const { return "Unknown Plugin"; }
+    virtual const char* getDescription() const { return "No description available."; }
+    virtual const char* getAuthor() const { return "Anonymous"; }
+    virtual const char* getVersion() const { return "1.0.0"; }
 };
 
 } // namespace cs

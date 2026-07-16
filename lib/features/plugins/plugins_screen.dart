@@ -13,6 +13,7 @@ class PluginsScreen extends ConsumerStatefulWidget {
 class _PluginsScreenState extends ConsumerState<PluginsScreen> {
   int _pluginCount = 0;
   final List<bool> _pluginStatus = [];
+  final List<({String name, String description, String author, String version})> _pluginInfos = [];
 
   @override
   void initState() {
@@ -26,8 +27,10 @@ class _PluginsScreenState extends ConsumerState<PluginsScreen> {
     setState(() {
       _pluginCount = count;
       _pluginStatus.clear();
+      _pluginInfos.clear();
       for (int i = 0; i < count; i++) {
         _pluginStatus.add(false); // Default to off
+        _pluginInfos.add(service.getPluginInfo(i));
       }
     });
   }
@@ -38,7 +41,9 @@ class _PluginsScreenState extends ConsumerState<PluginsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Plugins'),
+        title: const Text('Plugin Marketplace'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/'),
@@ -51,33 +56,58 @@ class _PluginsScreenState extends ConsumerState<PluginsScreen> {
         ],
       ),
       body: _pluginCount == 0
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.extension_off, size: 64, color: Colors.white24),
-                  SizedBox(height: 16),
-                  Text('No plugins found in /plugins directory.', style: TextStyle(color: Colors.white54)),
+                  Icon(Icons.extension_off_outlined, size: 64, color: Colors.white10),
+                  const SizedBox(height: 16),
+                  const Text('No plugins detected.', style: TextStyle(color: Colors.white24, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  const Text('Place .dll files in the /plugins folder.', style: TextStyle(color: Colors.white10, fontSize: 12)),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
               itemCount: _pluginCount,
               itemBuilder: (context, index) {
+                final info = _pluginInfos[index];
                 return Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.extension, color: Colors.blueAccent),
-                    title: Text('Plugin #$index'),
-                    subtitle: const Text('External Frame Processor'),
-                    trailing: Switch(
-                      value: _pluginStatus[index],
-                      onChanged: (val) {
-                        setState(() {
-                          _pluginStatus[index] = val;
-                        });
-                        service.setPluginEnabled(index, val);
-                      },
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Colors.white10)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                        child: const Icon(Icons.extension, color: Colors.blueAccent),
+                      ),
+                      title: Text(info.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(info.description, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Text("v${info.version}", style: const TextStyle(color: Colors.white24, fontSize: 11)),
+                              const SizedBox(width: 12),
+                              Text("by ${info.author}", style: const TextStyle(color: Colors.white24, fontSize: 11)),
+                            ],
+                          ),
+                        ],
+                      ),
+                      trailing: Switch(
+                        value: _pluginStatus[index],
+                        activeColor: Colors.blueAccent,
+                        onChanged: (val) {
+                          setState(() => _pluginStatus[index] = val);
+                          service.setPluginEnabled(index, val);
+                        },
+                      ),
                     ),
                   ),
                 );

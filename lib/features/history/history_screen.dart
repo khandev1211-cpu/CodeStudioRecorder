@@ -33,7 +33,20 @@ class HistoryScreen extends ConsumerWidget {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    leading: const Icon(Icons.movie, color: Colors.red),
+                    leading: Container(
+                      width: 64,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: recording.thumbnailPath != null && File(recording.thumbnailPath!).existsSync()
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.file(File(recording.thumbnailPath!), fit: BoxFit.cover),
+                            )
+                          : const Icon(Icons.movie, color: Colors.red),
+                    ),
                     title: Text(recording.title),
                     subtitle: Text(
                       '${DateFormat.yMMMd().add_jm().format(recording.createdAt)} • ${_formatDuration(recording.duration)}',

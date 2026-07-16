@@ -225,6 +225,33 @@ class _ProfileDetailsScreenState extends ConsumerState<ProfileDetailsScreen> {
             value: _profile.aiSilenceDetection,
             onChanged: (v) => setState(() => _profile = _profile.copyWith(aiSilenceDetection: v)),
           ),
+          const Divider(height: 40),
+          const Text("Advanced Audio Controls", style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          ListTile(
+            title: const Text("Noise Suppression Strength"),
+            subtitle: const Text("Adjust how aggressively to filter background noise"),
+            trailing: SizedBox(
+              width: 200,
+              child: Slider(
+                value: 0.5, // Mock value for now
+                onChanged: (v) {},
+                activeColor: Colors.blueAccent,
+              ),
+            ),
+          ),
+          CheckboxListTile(
+            title: const Text("High-Pass Filter"),
+            subtitle: const Text("Remove low-frequency hum from microphone"),
+            value: true,
+            onChanged: (v) {},
+          ),
+          CheckboxListTile(
+            title: const Text("Automatic Gain Control"),
+            subtitle: const Text("Keep audio levels consistent throughout recording"),
+            value: true,
+            onChanged: (v) {},
+          ),
         ],
       ),
     );

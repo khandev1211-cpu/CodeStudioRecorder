@@ -5,6 +5,7 @@ class Recording {
   final DateTime createdAt;
   final Duration duration;
   final int fileSize;
+  final String? thumbnailPath;
 
   Recording({
     required this.id,
@@ -13,6 +14,7 @@ class Recording {
     required this.createdAt,
     required this.duration,
     required this.fileSize,
+    this.thumbnailPath,
   });
 
   Map<String, dynamic> toJson() {
@@ -23,6 +25,7 @@ class Recording {
       'createdAt': createdAt.toIso8601String(),
       'durationMs': duration.inMilliseconds,
       'fileSize': fileSize,
+      'thumbnailPath': thumbnailPath,
     };
   }
 
@@ -34,6 +37,7 @@ class Recording {
       createdAt: DateTime.parse(json['createdAt']),
       duration: Duration(milliseconds: json['durationMs']),
       fileSize: json['fileSize'],
+      thumbnailPath: json['thumbnailPath'],
     );
   }
 }

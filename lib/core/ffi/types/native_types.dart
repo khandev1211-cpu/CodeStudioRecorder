@@ -70,6 +70,13 @@ final class NativeWebcamDeviceInfo extends Struct {
   external Pointer<Utf8> name;
 }
 
+final class NativePluginInfo extends Struct {
+  external Pointer<Utf8> name;
+  external Pointer<Utf8> description;
+  external Pointer<Utf8> author;
+  external Pointer<Utf8> version;
+}
+
 final class NativeMonitorInfo extends Struct {
   @Int32()
   external int index;

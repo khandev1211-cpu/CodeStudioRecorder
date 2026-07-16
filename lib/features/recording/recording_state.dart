@@ -160,10 +160,14 @@ class RecordingNotifier extends StateNotifier<RecordingState> {
       // Detect transition to completed
       if (status == RecordingStatus.completed && state.status != RecordingStatus.completed) {
         if (_lastOutputPath != null) {
+          final thumbnailPath = _lastOutputPath!.replaceAll('.mp4', '.jpg');
+          _service.generateThumbnail(_lastOutputPath!, thumbnailPath);
+          
           _historyService.saveRecording(Recording(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
             title: p.basename(_lastOutputPath!),
             filePath: _lastOutputPath!,
+            thumbnailPath: thumbnailPath,
             duration: Duration(milliseconds: stats.elapsedMs),
             createdAt: DateTime.now(),
             fileSize: 0,
